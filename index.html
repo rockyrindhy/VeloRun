@@ -179,7 +179,6 @@
 
         .activity-list { max-height: 50vh; overflow-y: auto; position: relative; z-index: 1; padding-right: 4px; }
         
-        /* ✅ PERUBAHAN: Activity item bisa diklik */
         .activity-item { 
             background: rgba(255,255,255,0.6); 
             padding: 14px; 
@@ -195,49 +194,26 @@
             transform: translateX(4px);
             box-shadow: 0 6px 16px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
         }
-        .activity-item:active {
-            transform: scale(0.98);
-        }
+        .activity-item:active { transform: scale(0.98); }
         
         .activity-info h4 { margin: 0 0 6px 0; color: var(--text-black); font-size: 15px; font-weight: 800; }
         .activity-info p { margin: 3px 0; font-size: 12px; color: var(--text-grey); font-weight: 600; }
         
-        /* Detail aktivitas styling */
         .detail-image-container {
-            width: 100%;
-            height: 220px;
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            border: 2px solid rgba(255, 107, 0, 0.3);
+            width: 100%; height: 220px; border-radius: 20px; overflow: hidden;
+            margin-bottom: 16px; border: 2px solid rgba(255, 107, 0, 0.3);
             box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-            position: relative;
-            z-index: 1;
-            background: #f1f5f9;
+            position: relative; z-index: 1; background: #f1f5f9;
         }
         
-        .detail-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center center;
-            display: block;
-        }
+        .detail-image { width: 100%; height: 100%; object-fit: cover; object-position: center center; display: block; }
         
         .detail-label {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 107, 0, 0.95);
-            color: white;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            z-index: 2;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(255, 107, 0, 0.95); color: white;
+            font-size: 10px; font-weight: 700; padding: 4px 10px;
+            border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+            z-index: 2; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         
         .detail-info {
@@ -248,9 +224,7 @@
         }
         
         .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
+            display: flex; justify-content: space-between; padding: 8px 0;
             border-bottom: 1px solid rgba(255, 107, 0, 0.1);
         }
         .detail-row:last-child { border-bottom: none; }
@@ -395,7 +369,7 @@
         </div>
     </div>
 
-    <!-- ✅ MODAL DETAIL AKTIVITAS (BARU) -->
+    <!-- Modal Detail Aktivitas -->
     <div class="modal" id="detailModal">
         <div class="modal-content glass-panel glossy-highlight">
             <h3>Detail Aktivitas</h3>
@@ -406,30 +380,12 @@
             </div>
             
             <div class="detail-info">
-                <div class="detail-row">
-                    <span>Aktivitas</span>
-                    <span id="detailName">-</span>
-                </div>
-                <div class="detail-row">
-                    <span>Tipe</span>
-                    <span id="detailEquipment">-</span>
-                </div>
-                <div class="detail-row">
-                    <span>Jarak</span>
-                    <span id="detailDistance">-</span>
-                </div>
-                <div class="detail-row">
-                    <span>Waktu</span>
-                    <span id="detailDuration">-</span>
-                </div>
-                <div class="detail-row">
-                    <span>Pace</span>
-                    <span id="detailPace">-</span>
-                </div>
-                <div class="detail-row">
-                    <span>Tanggal</span>
-                    <span id="detailDate">-</span>
-                </div>
+                <div class="detail-row"><span>Aktivitas</span><span id="detailName">-</span></div>
+                <div class="detail-row"><span>Tipe</span><span id="detailEquipment">-</span></div>
+                <div class="detail-row"><span>Jarak</span><span id="detailDistance">-</span></div>
+                <div class="detail-row"><span>Waktu</span><span id="detailDuration">-</span></div>
+                <div class="detail-row"><span>Pace</span><span id="detailPace">-</span></div>
+                <div class="detail-row"><span>Tanggal</span><span id="detailDate">-</span></div>
             </div>
             
             <button class="btn btn-dark" onclick="closeDetail()" style="width: 100%;">
@@ -781,34 +737,163 @@
         }
 
         function closeHistory() { document.getElementById('historyModal').style.display = 'none'; }
-        function closeDetail() { document.getElementById('detailModal').style.display = 'none'; }
+        
+        function closeDetail() { 
+            document.getElementById('detailModal').style.display = 'none';
+            const openBtn = document.getElementById('openImageBtn');
+            if (openBtn) openBtn.remove();
+            const imgEl = document.getElementById('detailImage');
+            imgEl.src = '';
+            imgEl.style.display = 'none';
+        }
 
-        // ✅ FUNGSI BARU: Tampilkan detail aktivitas
-        function showActivityDetail(activity) {
-            // Isi data detail
-            document.getElementById('detailName').innerText = activity.name;
-            document.getElementById('detailEquipment').innerText = activity.equipment;
-            document.getElementById('detailDistance').innerText = activity.distance + ' km';
-            document.getElementById('detailDuration').innerText = activity.duration;
-            document.getElementById('detailPace').innerText = activity.pace;
+        // ✅ FUNGSI: Konversi URL Google Drive ke format yang bisa di-embed
+        function convertGoogleDriveUrl(url) {
+            if (!url || url.trim() === '') return null;
             
-            // Format tanggal
+            let fileId = null;
+            
+            // Format: drive.google.com/uc?export=view&id=FILE_ID
+            if (url.includes('drive.google.com/uc')) {
+                const match = url.match(/id=([a-zA-Z0-9_-]+)/);
+                if (match) fileId = match[1];
+            }
+            // Format: drive.google.com/file/d/FILE_ID/view
+            else if (url.includes('drive.google.com/file/d/')) {
+                const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (match) fileId = match[1];
+            }
+            // Format: lh3.googleusercontent.com/d/FILE_ID
+            else if (url.includes('lh3.googleusercontent.com/d/')) {
+                return url;
+            }
+            // Format: drive.google.com/thumbnail?id=FILE_ID
+            else if (url.includes('drive.google.com/thumbnail')) {
+                const match = url.match(/id=([a-zA-Z0-9_-]+)/);
+                if (match) fileId = match[1];
+            }
+            
+            if (fileId) {
+                return `https://lh3.googleusercontent.com/d/${fileId}`;
+            }
+            
+            return url;
+        }
+
+        // ✅ FUNGSI: Tampilkan placeholder
+        function showImagePlaceholder(message) {
+            const imgEl = document.getElementById('detailImage');
+            const svgPlaceholder = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="220" viewBox="0 0 400 220"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23f1f5f9;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23e2e8f0;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill="url(%23grad)" width="400" height="220" rx="20"/%3E%3Ctext fill="%2394a3b8" font-family="sans-serif" font-size="48" x="50%25" y="45%25" text-anchor="middle" dominant-baseline="middle"%3E📷%3C/text%3E%3Ctext fill="%2364748b" font-family="sans-serif" font-size="14" font-weight="600" x="50%25" y="60%25" text-anchor="middle"%3E${encodeURIComponent(message)}%3C/text%3E%3C/svg%3E`;
+            imgEl.src = svgPlaceholder;
+            imgEl.style.display = 'block';
+            const openBtn = document.getElementById('openImageBtn');
+            if (openBtn) openBtn.remove();
+        }
+
+        // ✅ FUNGSI: Tampilkan tombol buka gambar di tab baru
+        function showImageOpenButton(originalUrl, fileId) {
+            const imgEl = document.getElementById('detailImage');
+            
+            let openUrl = originalUrl;
+            if (fileId) {
+                openUrl = `https://drive.google.com/file/d/${fileId}/view`;
+            }
+            
+            const svgHtml = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="220" viewBox="0 0 400 220"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23fff7ed;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23ffedd5;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill="url(%23grad)" width="400" height="220" rx="20"/%3E%3Ctext fill="%23ea580c" font-family="sans-serif" font-size="48" x="50%25" y="35%25" text-anchor="middle" dominant-baseline="middle"%3E📷%3C/text%3E%3Ctext fill="%23c2410c" font-family="sans-serif" font-size="14" font-weight="600" x="50%25" y="55%25" text-anchor="middle"%3EGambar tersedia di Google Drive%3C/text%3E%3Ctext fill="%239a3412" font-family="sans-serif" font-size="12" x="50%25" y="65%25" text-anchor="middle"%3EKlik tombol di bawah untuk melihat%3C/text%3E%3C/svg%3E`;
+            
+            imgEl.src = svgHtml;
+            imgEl.style.display = 'block';
+            
+            let openBtn = document.getElementById('openImageBtn');
+            if (!openBtn) {
+                openBtn = document.createElement('button');
+                openBtn.id = 'openImageBtn';
+                openBtn.className = 'btn btn-primary';
+                openBtn.style.marginTop = '12px';
+                openBtn.style.width = '100%';
+                openBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;">
+                        <path fill-rule="evenodd" d="M15.75 2.25H21a.75.75 0 0 1 .75.75v5.25a.75.75 0 0 1-1.5 0V4.81L8.03 17.03a.75.75 0 0 1-1.06-1.06L19.19 3.75h-3.44a.75.75 0 0 1 0-1.5Zm-10.5 4.5a1.5 1.5 0 0 0-1.5 1.5v10.5a1.5 1.5 0 0 0 1.5 1.5h10.5a1.5 1.5 0 0 0 1.5-1.5V10.5a.75.75 0 0 1 1.5 0v8.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V8.25a3 3 0 0 1 3-3h8.25a.75.75 0 0 1 0 1.5H5.25Z" clip-rule="evenodd" />
+                    </svg>
+                    Buka Gambar di Tab Baru
+                `;
+                openBtn.onclick = function() {
+                    window.open(openUrl, '_blank');
+                };
+                
+                const detailInfo = document.querySelector('.detail-info');
+                const closeBtn = detailInfo.parentNode.querySelector('button');
+                detailInfo.parentNode.insertBefore(openBtn, closeBtn);
+            }
+        }
+
+        // ✅ FUNGSI: Tampilkan detail aktivitas dengan konversi URL
+        function showActivityDetail(activity) {
+            console.log('=== DETAIL AKTIVITAS ===');
+            console.log('Activity:', activity);
+            console.log('Original URL:', activity.imageUrl);
+            
+            document.getElementById('detailName').innerText = activity.name || '-';
+            document.getElementById('detailEquipment').innerText = activity.equipment || '-';
+            document.getElementById('detailDistance').innerText = (activity.distance || 0) + ' km';
+            document.getElementById('detailDuration').innerText = activity.duration || '-';
+            document.getElementById('detailPace').innerText = activity.pace || '-';
+            
             const date = new Date(activity.timestamp);
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
             document.getElementById('detailDate').innerText = date.toLocaleDateString('id-ID', options);
             
-            // Tampilkan gambar jika ada
             const imgEl = document.getElementById('detailImage');
-            if (activity.imageUrl) {
-                imgEl.src = activity.imageUrl;
-                imgEl.style.display = 'block';
+            
+            // Hapus tombol open jika ada
+            const openBtn = document.getElementById('openImageBtn');
+            if (openBtn) openBtn.remove();
+            
+            if (activity.imageUrl && activity.imageUrl.trim() !== '') {
+                const convertedUrl = convertGoogleDriveUrl(activity.imageUrl);
+                console.log('Converted URL:', convertedUrl);
+                
+                let fileId = null;
+                if (activity.imageUrl.includes('id=')) {
+                    fileId = activity.imageUrl.split('id=')[1].split('&')[0];
+                } else if (convertedUrl && convertedUrl.includes('/d/')) {
+                    fileId = convertedUrl.split('/d/')[1];
+                }
+                
+                console.log('File ID:', fileId);
+                
+                imgEl.onerror = null;
+                imgEl.onload = null;
+                
+                if (convertedUrl) {
+                    imgEl.src = convertedUrl;
+                    imgEl.style.display = 'block';
+                    
+                    imgEl.onerror = function() {
+                        console.log(' lh3 gagal, coba thumbnail...');
+                        
+                        if (fileId) {
+                            imgEl.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+                            
+                            imgEl.onerror = function() {
+                                console.log('❌ Thumbnail gagal, tampilkan tombol buka...');
+                                showImageOpenButton(activity.imageUrl, fileId);
+                            };
+                        } else {
+                            showImageOpenButton(activity.imageUrl, null);
+                        }
+                    };
+                    
+                    imgEl.onload = function() {
+                        console.log('✅ Gambar berhasil dimuat!');
+                    };
+                } else {
+                    showImagePlaceholder('URL tidak valid');
+                }
             } else {
-                // Fallback: placeholder
-                imgEl.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f1f5f9" width="400" height="300"/%3E%3Ctext fill="%2394a3b8" font-family="sans-serif" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3EGambar tidak tersedia%3C/text%3E%3C/svg%3E';
-                imgEl.style.display = 'block';
+                showImagePlaceholder('Tidak ada gambar tersimpan');
             }
             
-            // Tampilkan modal
             document.getElementById('detailModal').style.display = 'flex';
         }
 
@@ -816,24 +901,45 @@
             document.getElementById('historyModal').style.display = 'flex';
             const list = document.getElementById('activityList');
             list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-grey);">Memuat data...</div>';
+            
             try {
                 const userId = getUserId();
                 const response = await fetch(`${GAS_URL}?action=getActivities&userId=${userId}`);
                 const responseText = await response.text();
+                console.log('=== RESPONSE DARI SERVER ===');
+                console.log(responseText);
+                
                 const result = JSON.parse(responseText);
+                
                 if (result.success && result.activities.length > 0) {
-                    // ✅ Klik untuk lihat detail
-                    list.innerHTML = result.activities.map((act, index) => `
-                        <div class="activity-item" onclick="showActivityDetail(result.activities[${index}])">
-                            <div class="activity-info">
-                                <h4>${act.name}</h4>
-                                <p> ${act.distance} km |  ${act.duration} |  ${act.pace}</p>
-                                <p> ${act.equipment} |  ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                    window._activities = result.activities;
+                    
+                    list.innerHTML = result.activities.map((act, index) => {
+                        const hasImage = act.imageUrl && act.imageUrl.trim() !== '';
+                        const statusIcon = hasImage ? '✓' : '✗';
+                        const statusColor = hasImage ? '#10b981' : '#ef4444';
+                        const statusText = hasImage ? 'Ada gambar' : 'Tidak ada gambar';
+                        
+                        return `
+                            <div class="activity-item" onclick="showActivityDetail(window._activities[${index}])">
+                                <div class="activity-info">
+                                    <h4>${act.name || 'Tanpa Nama'}</h4>
+                                    <p>📏 ${act.distance || 0} km | ⏱ ${act.duration || '-'} | ⚡ ${act.pace || '-'}</p>
+                                    <p>👟 ${act.equipment || '-'} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                    <p style="font-size:10px; color:${statusColor};">${statusIcon} ${statusText}</p>
+                                </div>
                             </div>
-                        </div>
-                    `).join('');
-                } else { list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-grey);">Belum ada aktivitas.</div>'; }
-            } catch (error) { list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data.</div>'; }
+                        `;
+                    }).join('');
+                    
+                    console.log(`✅ Loaded ${result.activities.length} activities`);
+                } else { 
+                    list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-grey);">Belum ada aktivitas.</div>'; 
+                }
+            } catch (error) { 
+                console.error('❌ Error load history:', error);
+                list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data.</div>'; 
+            }
         }
 
         function blobToBase64(blob) {
