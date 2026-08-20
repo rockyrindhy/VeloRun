@@ -4,42 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- TEMA WARNA VELO RUN -->
     <meta name="theme-color" content="#FF6B00">
     <meta name="msapplication-TileColor" content="#FF6B00">
     <meta name="msapplication-navbutton-color" content="#FF6B00">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- IDENTITAS TAB DESKTOP -->
     <title>VeloRun - Sport Tracker by RockyRindhy</title>
     <meta name="description" content="Aplikasi tracking olahraga premium - Lari, Sepeda, Jalan Kaki">
     <meta name="author" content="RockyRindhy">
     
-    <!-- FAVICON DESKTOP -->
     <link rel="icon" type="image/png" sizes="32x32" href="logo.png">
     <link rel="icon" type="image/png" sizes="16x16" href="logo.png">
     <link rel="shortcut icon" href="logo.png">
-    
-    <!-- ICON PWA -->
     <link rel="manifest" href="manifest.json">
     
-    <!-- ICON iOS -->
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="apple-touch-icon" sizes="152x152" href="logo.png">
     <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
     <link rel="apple-touch-icon" sizes="167x167" href="logo.png">
     
-    <!-- ICON ANDROID -->
     <link rel="icon" type="image/png" sizes="192x192" href="logo.png">
     <link rel="icon" type="image/png" sizes="512x512" href="logo.png">
     
-    <!-- OPEN GRAPH -->
     <meta property="og:title" content="VeloRun - Sport Tracker">
     <meta property="og:description" content="Aplikasi tracking olahraga premium oleh RockyRindhy">
     <meta property="og:image" content="logo.png">
     <meta property="og:type" content="website">
     
-    <!-- TWITTER CARD -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="VeloRun - Sport Tracker">
     <meta name="twitter:description" content="Aplikasi tracking olahraga premium oleh RockyRindhy">
@@ -313,39 +304,80 @@
             border-bottom: none !important;
         }
 
-        /* ✅ WATERMARK LOGO VELO RUN */
+        /* ✅ WATERMARK LOGO VELO RUN - TRANSPARAN (seperti watermark foto profesional) */
         .velorun-watermark {
-            background: white !important;
-            border-radius: 12px !important;
-            padding: 8px 12px !important;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.15) !important;
+            background: transparent !important;
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 6px 10px !important;
+            box-shadow: none !important;
             display: flex !important;
             align-items: center !important;
-            gap: 8px !important;
-            border: 2px solid rgba(255, 107, 0, 0.3) !important;
+            gap: 6px !important;
             z-index: 997 !important;
         }
 
         .velorun-watermark img {
-            width: 28px !important;
-            height: 28px !important;
+            width: 24px !important;
+            height: 24px !important;
             object-fit: contain !important;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.9)) !important;
         }
 
         .velorun-watermark-text {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif !important;
             font-size: 13px !important;
             font-weight: 800 !important;
-            color: #FF6B00 !important;
+            color: white !important;
             letter-spacing: -0.3px !important;
             white-space: nowrap !important;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.95), 0 1px 2px rgba(0,0,0,0.9) !important;
         }
 
         .velorun-watermark-by {
             font-size: 9px !important;
             font-weight: 600 !important;
-            color: #475569 !important;
+            color: rgba(255,255,255,0.95) !important;
             margin-top: -2px !important;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9) !important;
+        }
+
+        /* ✅ WATERMARK DI PREVIEW PETA (Hasil & Detail Riwayat) */
+        .preview-watermark {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+            pointer-events: none;
+            padding: 4px 8px;
+        }
+
+        .preview-watermark img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.9));
+        }
+
+        .preview-watermark-text {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            font-size: 16px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.3px;
+            white-space: nowrap;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.95), 0 1px 3px rgba(0,0,0,0.9);
+        }
+
+        .preview-watermark-by {
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.95);
+            margin-top: -2px;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.9);
         }
         
         ::-webkit-scrollbar { width: 6px; }
@@ -458,7 +490,7 @@
         <div class="modal-content glass-panel glossy-highlight">
             <h3>Aktivitas Tersimpan!</h3>
             
-            <div class="image-preview-container">
+            <div class="image-preview-container" id="resultPreviewContainer">
                 <div class="preview-label">Preview</div>
                 <img id="resultImage" class="image-preview" src="" alt="Peta rute">
             </div>
@@ -491,7 +523,7 @@
         <div class="modal-content glass-panel glossy-highlight">
             <h3>Detail Aktivitas</h3>
             
-            <div class="detail-image-container">
+            <div class="detail-image-container" id="detailPreviewContainer">
                 <div class="detail-label">Peta Rute</div>
                 <img id="detailImage" class="detail-image" src="" alt="Peta rute">
             </div>
@@ -548,13 +580,11 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: 'anonymous' }).addTo(map);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // ✅ WATERMARK LOGO VELO RUN DI POJOK KIRI BAWAH
+        // ✅ WATERMARK LOGO VELO RUN DI POJOK KIRI BAWAH PETA (TRANSPARAN)
         const watermarkControl = L.control({ position: 'bottomleft' });
 
         watermarkControl.onAdd = function(map) {
             const div = L.DomUtil.create('div', 'velorun-watermark');
-            
-            // Pastikan klik pada watermark tidak mengganggu peta
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
             
@@ -577,6 +607,28 @@
         let totalDistance = 0, lastPosition = null, routeCoords = [], currentMapImage = null, gpsFirstLock = false;
         let savedActivityData = null;
         let turnMarkers = [];
+
+        // ✅ FUNGSI: Tambahkan watermark ke container preview
+        function addPreviewWatermark(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            // Hapus watermark lama jika ada
+            const oldWatermark = container.querySelector('.preview-watermark');
+            if (oldWatermark) oldWatermark.remove();
+            
+            const watermark = document.createElement('div');
+            watermark.className = 'preview-watermark';
+            watermark.innerHTML = `
+                <img src="logo.png" alt="VeloRun" onerror="this.style.display='none'">
+                <div>
+                    <div class="preview-watermark-text">VeloRun</div>
+                    <div class="preview-watermark-by">by RockyRindhy</div>
+                </div>
+            `;
+            
+            container.appendChild(watermark);
+        }
 
         function updateMarkerColor(isTracking) {
             if (currentMarker) {
@@ -814,6 +866,9 @@
                 imgEl.style.display = 'block';
                 if (imgEl.dataset.oldUrl) URL.revokeObjectURL(imgEl.dataset.oldUrl);
                 imgEl.dataset.oldUrl = imageUrl;
+                
+                // ✅ Tambahkan watermark ke preview hasil
+                setTimeout(() => addPreviewWatermark('resultPreviewContainer'), 100);
             } else {
                 imgEl.style.display = 'none';
             }
@@ -914,7 +969,7 @@
 
         function showImagePlaceholder(message) {
             const imgEl = document.getElementById('detailImage');
-            const svgPlaceholder = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="220" viewBox="0 0 400 220"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23f1f5f9;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23e2e8f0;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill="url(%23grad)" width="400" height="220" rx="20"/%3E%3Ctext fill="%2394a3b8" font-family="sans-serif" font-size="48" x="50%25" y="45%25" text-anchor="middle" dominant-baseline="middle"%3E%3C/text%3E%3Ctext fill="%2364748b" font-family="sans-serif" font-size="14" font-weight="600" x="50%25" y="60%25" text-anchor="middle"%3E${encodeURIComponent(message)}%3C/text%3E%3C/svg%3E`;
+            const svgPlaceholder = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="220" viewBox="0 0 400 220"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23f1f5f9;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23e2e8f0;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill="url(%23grad)" width="400" height="220" rx="20"/%3E%3Ctext fill="%2394a3b8" font-family="sans-serif" font-size="48" x="50%25" y="45%25" text-anchor="middle" dominant-baseline="middle"%3E📷%3C/text%3E%3Ctext fill="%2364748b" font-family="sans-serif" font-size="14" font-weight="600" x="50%25" y="60%25" text-anchor="middle"%3E${encodeURIComponent(message)}%3C/text%3E%3C/svg%3E`;
             imgEl.src = svgPlaceholder;
             imgEl.style.display = 'block';
             const openBtn = document.getElementById('openImageBtn');
@@ -929,7 +984,7 @@
                 openUrl = `https://drive.google.com/file/d/${fileId}/view`;
             }
             
-            const svgHtml = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="220" viewBox="0 0 400 220"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23fff7ed;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23ffedd5;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill="url(%23grad)" width="400" height="220" rx="20"/%3E%3Ctext fill="%23ea580c" font-family="sans-serif" font-size="48" x="50%25" y="35%25" text-anchor="middle" dominant-baseline="middle"%3E%3C/text%3E%3Ctext fill="%23c2410c" font-family="sans-serif" font-size="14" font-weight="600" x="50%25" y="55%25" text-anchor="middle"%3EGambar tersedia di Google Drive%3C/text%3E%3Ctext fill="%239a3412" font-family="sans-serif" font-size="12" x="50%25" y="65%25" text-anchor="middle"%3EKlik tombol di bawah untuk melihat%3C/text%3E%3C/svg%3E`;
+            const svgHtml = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="220" viewBox="0 0 400 220"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23fff7ed;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23ffedd5;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill="url(%23grad)" width="400" height="220" rx="20"/%3E%3Ctext fill="%23ea580c" font-family="sans-serif" font-size="48" x="50%25" y="35%25" text-anchor="middle" dominant-baseline="middle"%3E📷%3C/text%3E%3Ctext fill="%23c2410c" font-family="sans-serif" font-size="14" font-weight="600" x="50%25" y="55%25" text-anchor="middle"%3EGambar tersedia di Google Drive%3C/text%3E%3Ctext fill="%239a3412" font-family="sans-serif" font-size="12" x="50%25" y="65%25" text-anchor="middle"%3EKlik tombol di bawah untuk melihat%3C/text%3E%3C/svg%3E`;
             
             imgEl.src = svgHtml;
             imgEl.style.display = 'block';
@@ -997,6 +1052,9 @@
                     imgEl.src = convertedUrl;
                     imgEl.style.display = 'block';
                     
+                    // ✅ Tambahkan watermark ke preview detail
+                    setTimeout(() => addPreviewWatermark('detailPreviewContainer'), 300);
+                    
                     imgEl.onerror = function() {
                         console.log(' lh3 gagal, coba thumbnail...');
                         
@@ -1052,8 +1110,8 @@
                             <div class="activity-item" onclick="showActivityDetail(window._activities[${index}])">
                                 <div class="activity-info">
                                     <h4>${act.name || 'Tanpa Nama'}</h4>
-                                    <p> ${act.distance || 0} km | ${act.duration || '-'} | ${act.pace || '-'}</p>
-                                    <p> ${act.equipment || '-'} | ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                    <p> ${act.distance || 0} km |  ${act.duration || '-'} | ${act.pace || '-'}</p>
+                                    <p> ${act.equipment || '-'} |  ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                                     <p style="font-size:10px; color:${statusColor};">${statusIcon} ${statusText}</p>
                                 </div>
                             </div>
