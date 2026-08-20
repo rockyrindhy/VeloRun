@@ -28,62 +28,27 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif; background: #E2E8F0; overflow: hidden; }
         #map { width: 100%; height: 100%; z-index: 1; }
         
-        /* ✅ PERUBAHAN 1: TITIK GPS LINGKARAN SEMPURNA FLAT */
         .current-position-marker {
-            background: var(--gps-green); /* Hijau sebelum tracking */
-            width: 20px;
-            height: 20px;
-            border-radius: 50%; /* Lingkaran sempurna */
+            background: var(--gps-green);
+            width: 20px; height: 20px; border-radius: 50%;
             border: 3px solid white;
             box-shadow: 0 2px 8px rgba(0,0,0,0.25);
             position: relative;
-            /* Hilangkan animasi pulse untuk flat look */
         }
-        
-        /* Highlight kecil untuk efek glossy tanpa animasi */
         .current-position-marker::before {
-            content: '';
-            position: absolute;
-            top: 20%;
-            left: 25%;
-            width: 30%;
-            height: 30%;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
-            filter: blur(0.5px);
+            content: ''; position: absolute; top: 20%; left: 25%; width: 30%; height: 30%;
+            background: rgba(255, 255, 255, 0.6); border-radius: 50%; filter: blur(0.5px);
         }
-        
-        /* ✅ Saat tracking, berubah orange */
         .current-position-marker.tracking {
             background: var(--primary-orange);
             box-shadow: 0 2px 8px rgba(255, 107, 0, 0.4);
         }
 
-        /* ✅ PERUBAHAN 2: TANDA START - FLAG ORANGE */
-        .start-marker {
-            background: transparent;
-            width: 32px;
-            height: 32px;
-        }
-        
-        .start-flag {
-            width: 32px;
-            height: 32px;
-            position: relative;
-        }
+        .start-marker { background: transparent; width: 32px; height: 32px; }
+        .start-flag { width: 32px; height: 32px; position: relative; }
 
-        /* ✅ PERUBAHAN 3: TANDA PANAH TIKUNGAN */
-        .turn-marker {
-            background: transparent;
-            width: 28px;
-            height: 28px;
-        }
-        
-        .turn-arrow {
-            width: 28px;
-            height: 28px;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-        }
+        .turn-marker { background: transparent; width: 28px; height: 28px; }
+        .turn-arrow { width: 28px; height: 28px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
 
         .glass-panel {
             background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
@@ -158,52 +123,25 @@
             position: relative;
             z-index: 1;
         }
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-            font-size: 13px;
-            color: var(--text-black);
-            font-weight: 600;
-        }
+        .summary-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; color: var(--text-black); font-weight: 600; }
         .summary-row span:first-child { color: var(--text-grey); }
         .summary-row span:last-child { color: var(--primary-orange); font-weight: 800; }
 
         .image-preview-container {
-            width: 100%;
-            height: 200px;
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 14px;
-            border: 2px solid rgba(255, 107, 0, 0.3);
+            width: 100%; height: 200px; border-radius: 20px; overflow: hidden;
+            margin-bottom: 14px; border: 2px solid rgba(255, 107, 0, 0.3);
             box-shadow: 0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.5);
-            position: relative;
-            z-index: 1;
-            background: #f1f5f9;
+            position: relative; z-index: 1; background: #f1f5f9;
         }
         
-        .image-preview {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center center;
-            display: block;
-        }
+        .image-preview { width: 100%; height: 100%; object-fit: cover; object-position: center center; display: block; }
         
         .preview-label {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 107, 0, 0.9);
-            color: white;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            z-index: 2;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(255, 107, 0, 0.9); color: white;
+            font-size: 10px; font-weight: 700; padding: 4px 10px;
+            border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+            z-index: 2; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .activity-list { max-height: 50vh; overflow-y: auto; position: relative; z-index: 1; padding-right: 4px; }
@@ -285,31 +223,37 @@
         </div>
     </div>
 
-    <!-- Modal Simpan Aktivitas -->
+    <!-- ✅ MODAL SIMPAN - VERSI MINIMALIS (TANPA ICON) -->
     <div class="modal" id="saveModal">
         <div class="modal-content glass-panel glossy-highlight">
-            <h3>💾 Simpan Aktivitas</h3>
+            <!-- ✅ Tanpa icon disket -->
+            <h3>Simpan Aktivitas</h3>
             
             <div class="activity-summary">
                 <div class="summary-row">
-                    <span>⏱️ Waktu</span>
+                    <!-- ✅ Tanpa icon jam -->
+                    <span>Waktu</span>
                     <span id="summaryTime">00:00:00</span>
                 </div>
                 <div class="summary-row">
-                    <span>📏 Jarak</span>
+                    <!-- ✅ Tanpa icon penggaris -->
+                    <span>Jarak</span>
                     <span id="summaryDist">0.00 km</span>
                 </div>
                 <div class="summary-row">
-                    <span> Pace</span>
+                    <span>Pace</span>
                     <span id="summaryPace">0:00</span>
                 </div>
             </div>
 
-            <input type="text" id="actName" placeholder="Nama Aktivitas" value="Lari Pagi">
+            <!-- ✅ Placeholder samar "Tulis Aktivitas...." -->
+            <input type="text" id="actName" placeholder="Tulis Aktivitas...." value="">
+            
+            <!-- ✅ Tanpa icon emoji, urutan: Berjalan, Berlari, Bersepeda -->
             <select id="actEquipment">
-                <option value="Sepatu Lari">👟 Sepatu Lari</option>
-                <option value="Sepeda">🚴 Sepeda</option>
-                <option value="Jalan Kaki">🚶 Jalan Kaki</option>
+                <option value="Berjalan">Berjalan</option>
+                <option value="Berlari" selected>Berlari</option>
+                <option value="Bersepeda">Bersepeda</option>
             </select>
             
             <div class="btn-group" style="margin-top: 20px;">
@@ -328,7 +272,7 @@
     <!-- Modal Hasil -->
     <div class="modal" id="resultModal">
         <div class="modal-content glass-panel glossy-highlight">
-            <h3>✅ Aktivitas Tersimpan!</h3>
+            <h3>Aktivitas Tersimpan!</h3>
             
             <div class="image-preview-container">
                 <div class="preview-label">Preview</div>
@@ -336,18 +280,9 @@
             </div>
             
             <div class="activity-summary">
-                <div class="summary-row">
-                    <span>Nama</span>
-                    <span id="resultName">-</span>
-                </div>
-                <div class="summary-row">
-                    <span>Jarak</span>
-                    <span id="resultDist">-</span>
-                </div>
-                <div class="summary-row">
-                    <span>Waktu</span>
-                    <span id="resultTime">-</span>
-                </div>
+                <div class="summary-row"><span>Nama</span><span id="resultName">-</span></div>
+                <div class="summary-row"><span>Jarak</span><span id="resultDist">-</span></div>
+                <div class="summary-row"><span>Waktu</span><span id="resultTime">-</span></div>
             </div>
             
             <div class="btn-group" style="margin-bottom: 10px;">
@@ -370,7 +305,7 @@
     <!-- Modal History -->
     <div class="modal" id="historyModal">
         <div class="modal-content glass-panel glossy-highlight">
-            <h3>📊 Riwayat Aktivitas</h3>
+            <h3>Riwayat Aktivitas</h3>
             <div id="activityList" class="activity-list">Memuat data...</div>
             <button class="btn btn-dark" onclick="closeHistory()" style="margin-top: 20px; width: 100%;">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
@@ -388,7 +323,7 @@
         const MAX_JUMP = 50;
         const AUTO_PAUSE_SPEED = 1.5;
         const AUTO_CENTER_DELAY = 5000;
-        const TURN_THRESHOLD = 45; // Deres, perubahan arah minimal untuk dianggap tikungan
+        const TURN_THRESHOLD = 45;
 
         function getUserId() {
             let userId = localStorage.getItem('velorun_userId');
@@ -408,59 +343,39 @@
         let startTime = 0, elapsedPausedTime = 0, pauseStartTime = 0, timerInterval = null;
         let totalDistance = 0, lastPosition = null, routeCoords = [], currentMapImage = null, gpsFirstLock = false;
         let savedActivityData = null;
-        let turnMarkers = []; // ✅ Array untuk menyimpan marker panah tikungan
+        let turnMarkers = [];
 
-        // ✅ FUNGSI BARU: Update warna marker GPS
         function updateMarkerColor(isTracking) {
             if (currentMarker) {
                 const el = currentMarker.getElement();
                 if (el) {
-                    if (isTracking) {
-                        el.classList.add('tracking');
-                    } else {
-                        el.classList.remove('tracking');
-                    }
+                    if (isTracking) el.classList.add('tracking');
+                    else el.classList.remove('tracking');
                 }
             }
         }
 
-        // ✅ FUNGSI BARU: Hitung bearing (arah) antara 2 titik
         function calculateBearing(lat1, lon1, lat2, lon2) {
-            const φ1 = lat1 * Math.PI / 180;
-            const φ2 = lat2 * Math.PI / 180;
+            const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
             const Δλ = (lon2 - lon1) * Math.PI / 180;
-            
             const y = Math.sin(Δλ) * Math.cos(φ2);
             const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-            
             const θ = Math.atan2(y, x);
             return (θ * 180 / Math.PI + 360) % 360;
         }
 
-        // ✅ FUNGSI BARU: Cek apakah ada tikungan dan tambahkan panah
         function checkForTurn() {
             if (routeCoords.length < 3) return;
-            
             const len = routeCoords.length;
-            const A = routeCoords[len - 3];
-            const B = routeCoords[len - 2];
-            const C = routeCoords[len - 1];
-            
+            const A = routeCoords[len - 3], B = routeCoords[len - 2], C = routeCoords[len - 1];
             const bearing1 = calculateBearing(A[0], A[1], B[0], B[1]);
             const bearing2 = calculateBearing(B[0], B[1], C[0], C[1]);
-            
             let diff = Math.abs(bearing2 - bearing1);
             if (diff > 180) diff = 360 - diff;
-            
-            // Jika perubahan arah > threshold, tambahkan panah
-            if (diff > TURN_THRESHOLD) {
-                addTurnMarker(B[0], B[1], bearing2);
-            }
+            if (diff > TURN_THRESHOLD) addTurnMarker(B[0], B[1], bearing2);
         }
 
-        // ✅ FUNGSI BARU: Tambahkan marker panah di tikungan
         function addTurnMarker(lat, lng, bearing) {
-            // SVG panah yang di-rotate sesuai bearing
             const arrowSvg = `
                 <svg class="turn-arrow" viewBox="0 0 24 24" style="transform: rotate(${bearing}deg);">
                     <defs>
@@ -471,61 +386,32 @@
                     <path d="M12 2L4 14h5v8h6v-8h5z" fill="#FF6B00" stroke="white" stroke-width="1.5" filter="url(#shadow)"/>
                 </svg>
             `;
-            
-            const icon = L.divIcon({
-                className: 'turn-marker',
-                html: arrowSvg,
-                iconSize: [28, 28],
-                iconAnchor: [14, 14]
-            });
-            
+            const icon = L.divIcon({ className: 'turn-marker', html: arrowSvg, iconSize: [28, 28], iconAnchor: [14, 14] });
             const marker = L.marker([lat, lng], { icon, zIndexOffset: 500 }).addTo(map);
             turnMarkers.push(marker);
         }
 
-        // ✅ FUNGSI BARU: Hapus semua marker panah
         function clearTurnMarkers() {
             turnMarkers.forEach(marker => map.removeLayer(marker));
             turnMarkers = [];
         }
 
-        function createCurrentPositionIcon() { 
-            return L.divIcon({ 
-                className: 'current-position-marker', 
-                iconSize: [20, 20], 
-                iconAnchor: [10, 10] 
-            }); 
-        }
-        
+        function createCurrentPositionIcon() { return L.divIcon({ className: 'current-position-marker', iconSize: [20, 20], iconAnchor: [10, 10] }); }
         function createStartIcon() { 
             return L.divIcon({ 
                 className: 'start-marker', 
-                html: `
-                    <svg class="start-flag" viewBox="0 0 32 32">
-                        <defs>
-                            <filter id="startShadow" x="-50%" y="-50%" width="200%" height="200%">
-                                <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-opacity="0.3"/>
-                            </filter>
-                        </defs>
-                        <path d="M8 4v24M8 4l16 6-16 6" fill="none" stroke="#FF6B00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#startShadow)"/>
-                        <circle cx="8" cy="4" r="3" fill="#FF6B00" stroke="white" stroke-width="1.5"/>
-                    </svg>
-                `,
-                iconSize: [32, 32], 
-                iconAnchor: [8, 32] 
+                html: `<svg class="start-flag" viewBox="0 0 32 32"><defs><filter id="startShadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-opacity="0.3"/></filter></defs><path d="M8 4v24M8 4l16 6-16 6" fill="none" stroke="#FF6B00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#startShadow)"/><circle cx="8" cy="4" r="3" fill="#FF6B00" stroke="white" stroke-width="1.5"/></svg>`,
+                iconSize: [32, 32], iconAnchor: [8, 32] 
             }); 
         }
-        
         function updateCurrentMarker(lat, lng) {
             if (!currentMarker) currentMarker = L.marker([lat, lng], { icon: createCurrentPositionIcon(), zIndexOffset: 1000 }).addTo(map);
             else currentMarker.setLatLng([lat, lng]);
         }
-        
         function addStartMarker(lat, lng) {
             if (startMarker) map.removeLayer(startMarker);
             startMarker = L.marker([lat, lng], { icon: createStartIcon(), title: 'Titik Mulai', zIndexOffset: 800 }).addTo(map);
         }
-        
         function forceCenterMap() {
             if (lastPosition) { map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true, duration: 0.8 }); userInteracted = false; }
         }
@@ -544,7 +430,6 @@
             const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
-        
         function checkAutoPause(currentPos) {
             if (!lastPosition) return false;
             const dist = getDistanceFromLatLonInM(lastPosition.lat, lastPosition.lng, currentPos.lat, currentPos.lng);
@@ -552,7 +437,6 @@
             if (timeDiff < 1) return true;
             return (dist / timeDiff * 3.6) < AUTO_PAUSE_SPEED;
         }
-        
         function updateTimer() {
             if (isPaused) return;
             const elapsed = Date.now() - startTime - elapsedPausedTime;
@@ -560,14 +444,12 @@
             document.getElementById('timeDisplay').innerText = `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
             updatePace(elapsed);
         }
-        
         function updatePace(elapsedMs) {
             if (totalDistance < 10) { document.getElementById('paceDisplay').innerText = "0:00"; return; }
             const paceMsPerKm = elapsedMs / (totalDistance / 1000);
             const paceMins = Math.floor(paceMsPerKm / 60000), paceSecs = Math.floor((paceMsPerKm % 60000) / 1000);
             document.getElementById('paceDisplay').innerText = `${paceMins}:${String(paceSecs).padStart(2,'0')}`;
         }
-        
         function updateStatus(text, statusClass = '') {
             document.getElementById('statusText').innerText = text;
             document.getElementById('statusDot').className = 'status-dot ' + statusClass;
@@ -599,13 +481,9 @@
                     const prevPos = routeCoords[routeCoords.length - 1];
                     const dist = getDistanceFromLatLonInM(prevPos[0], prevPos[1], lat, lng);
                     if (dist < MAX_JUMP) {
-                        totalDistance += dist; 
-                        routeCoords.push([lat, lng]);
-                        
+                        totalDistance += dist; routeCoords.push([lat, lng]);
                         if (!polyline) polyline = L.polyline(routeCoords, { color: '#FF6B00', weight: 6, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
                         else polyline.addLatLng([lat, lng]);
-                        
-                        // ✅ Cek apakah ada tikungan
                         checkForTurn();
                     }
                 } else {
@@ -616,7 +494,6 @@
                 if (!userInteracted) map.panTo([lat, lng], { animate: true, duration: 0.5 });
             }
         }
-        
         function onGeoError(error) {
             let msg = "Gagal mengakses GPS.";
             if (error.code === 1) msg = "Izin lokasi ditolak.";
@@ -633,23 +510,15 @@
             currentMapImage = null; savedActivityData = null;
             if (polyline) { map.removeLayer(polyline); polyline = null; }
             if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
-            clearTurnMarkers(); // ✅ Hapus marker panah lama
-            
+            clearTurnMarkers();
             timerInterval = setInterval(updateTimer, 1000);
             updateStatus('Berlari...', 'tracking');
-            
-            // ✅ UBAH WARNA MARKER MENJADI ORANGE
             updateMarkerColor(true);
-            
             document.getElementById('btnStart').style.display = 'none';
             document.getElementById('btnPause').style.display = 'flex';
             document.getElementById('btnResume').style.display = 'none';
             document.getElementById('btnFinish').style.display = 'flex';
-            
-            if (lastPosition) { 
-                addStartMarker(lastPosition.lat, lastPosition.lng); 
-                forceCenterMap(); 
-            }
+            if (lastPosition) { addStartMarker(lastPosition.lat, lastPosition.lng); forceCenterMap(); }
         }
         
         function togglePause(autoTriggered = false) {
@@ -673,10 +542,7 @@
             isTracking = false; isPaused = false;
             clearInterval(timerInterval);
             updateStatus('Selesai - Simpan aktivitas', 'ready');
-            
-            // ✅ KEMBALIKAN WARNA MARKER KE HIJAU
             updateMarkerColor(false);
-            
             document.getElementById('btnPause').style.display = 'none';
             document.getElementById('btnResume').style.display = 'none';
             document.getElementById('btnFinish').style.display = 'none';
@@ -690,10 +556,7 @@
             document.getElementById('saveModal').style.display = 'none';
             isTracking = true; isPaused = true;
             pauseStartTime = Date.now();
-            
-            // ✅ MARKER TETAP ORANGE KARENA MASIH DALAM SESI TRACKING
             updateMarkerColor(true);
-            
             updateStatus('Dijeda', 'paused');
             document.getElementById('btnResume').style.display = 'flex';
             document.getElementById('btnFinish').style.display = 'flex';
@@ -711,7 +574,6 @@
 
             try {
                 const savedView = { center: map.getCenter(), zoom: map.getZoom() };
-
                 if (routeCoords.length > 0) {
                     const bounds = L.latLngBounds(routeCoords);
                     map.fitBounds(bounds, { padding: [80, 40], maxZoom: 16, animate: true, duration: 0.8 });
@@ -781,9 +643,9 @@
             }
             
             if (hasError) {
-                document.querySelector('#resultModal h3').innerText = '⚠️ Tersimpan (Gambar Gagal)';
+                document.querySelector('#resultModal h3').innerText = 'Tersimpan (Gambar Gagal)';
             } else {
-                document.querySelector('#resultModal h3').innerText = '✅ Aktivitas Tersimpan!';
+                document.querySelector('#resultModal h3').innerText = 'Aktivitas Tersimpan!';
             }
             
             document.getElementById('resultModal').style.display = 'flex';
@@ -793,7 +655,7 @@
             if (!savedActivityData) return;
             const shareData = {
                 title: savedActivityData.name,
-                text: `🏃 ${savedActivityData.name}\n📏 ${savedActivityData.dist} km\n⏱ ${savedActivityData.time}\n⚡ Pace: ${savedActivityData.pace}\n\n#VeloRun`
+                text: `${savedActivityData.name}\n ${savedActivityData.dist} km\n ${savedActivityData.time}\n⚡ Pace: ${savedActivityData.pace}\n\n#VeloRun`
             };
             if (currentMapImage && navigator.canShare) {
                 const file = new File([currentMapImage], 'velorun.jpg', { type: 'image/jpeg' });
@@ -801,7 +663,7 @@
             }
             try {
                 if (navigator.share) await navigator.share(shareData);
-                else { await navigator.clipboard.writeText(shareData.text); alert('📋 Teks disalin!'); }
+                else { await navigator.clipboard.writeText(shareData.text); alert('Teks disalin!'); }
             } catch (err) { console.log('Share dibatalkan'); }
         }
 
@@ -815,7 +677,7 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            setTimeout(() => alert('✅ Gambar utuh disimpan ke Downloads!'), 300);
+            setTimeout(() => alert('Gambar utuh disimpan ke Downloads!'), 300);
         }
 
         function startNewActivity() {
@@ -823,12 +685,9 @@
             routeCoords = [];
             if (polyline) { map.removeLayer(polyline); polyline = null; }
             if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
-            clearTurnMarkers(); // ✅ Hapus semua marker panah
+            clearTurnMarkers();
             currentMapImage = null; savedActivityData = null;
-            
-            // ✅ KEMBALIKAN WARNA MARKER KE HIJAU
             updateMarkerColor(false);
-            
             document.getElementById('timeDisplay').innerText = "00:00:00";
             document.getElementById('distDisplay').innerText = "0.00";
             document.getElementById('paceDisplay').innerText = "0:00";
@@ -857,7 +716,7 @@
                         <div class="activity-item">
                             <div class="activity-info">
                                 <h4>${act.name}</h4>
-                                <p> ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
+                                <p>📏 ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
                                 <p>👟 ${act.equipment} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                             </div>
                         </div>
