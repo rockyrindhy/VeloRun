@@ -86,6 +86,7 @@
             flex: 0.4; padding: 14px 8px; background: linear-gradient(135deg, #6c757d, #495057);
             font-size: 18px;
         }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
         /* Floating Buttons */
         .floating-btn {
@@ -106,21 +107,39 @@
             position: absolute; top: 16px; left: 16px; right: 16px;
             background: rgba(255,255,255,0.95); padding: 10px 16px;
             border-radius: 12px; z-index: 999;
-            display: none; align-items: center; justify-content: space-between;
+            display: flex; align-items: center; justify-content: space-between;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .status-bar.active { display: flex; }
         .status-indicator {
             display: flex; align-items: center; gap: 8px;
             font-size: 13px; font-weight: 600; color: #333;
         }
         .status-dot {
             width: 10px; height: 10px; border-radius: 50%;
-            background: #28a745; animation: blink 1.5s infinite;
+            background: #ffc107;
         }
+        .status-dot.ready { background: #28a745; animation: blink 1.5s infinite; }
+        .status-dot.tracking { background: #1a73e8; animation: blink 1s infinite; }
         .status-dot.paused { background: #ffc107; animation: none; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .accuracy-info { font-size: 11px; color: #666; }
+        
+        /* GPS Loading Overlay */
+        .gps-loading {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.95); z-index: 3000;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        .gps-loading.hidden { display: none; }
+        .gps-loading .spinner {
+            border: 4px solid #f3f3f3; border-top: 4px solid #fc4c02; border-radius: 50%;
+            width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        .gps-loading-text { color: #333; font-size: 16px; font-weight: 600; }
+        .gps-loading-sub { color: #666; font-size: 13px; margin-top: 8px; }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         /* Modal */
         .modal {
@@ -157,7 +176,6 @@
             border: 4px solid #f3f3f3; border-top: 4px solid #fc4c02; border-radius: 50%;
             width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 16px;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-text { color: #666; font-weight: 600; }
     </style>
 </head>
@@ -165,7 +183,14 @@
 
     <div id="map"></div>
     
-    <!-- Status Bar (muncul saat tracking) -->
+    <!-- GPS Loading Screen -->
+    <div class="gps-loading" id="gpsLoading">
+        <div class="spinner"></div>
+        <div class="gps-loading-text">Mencari lokasi Anda...</div>
+        <div class="gps-loading-sub">Pastikan GPS aktif dan izin lokasi diberikan</div>
+    </div>
+    
+    <!-- Status Bar -->
     <div class="status-bar" id="statusBar">
         <div class="status-indicator">
             <div class="status-dot" id="statusDot"></div>
@@ -200,7 +225,7 @@
         </div>
         <div class="btn-group">
             <button class="btn btn-icon" onclick="showHistory()">📋</button>
-            <button class="btn btn-start" id="btnStart" onclick="startTracking()">▶ Mulai</button>
+            <button class="btn btn-start" id="btnStart" onclick="startTracking()" disabled>▶ Mulai</button>
             <button class="btn btn-stop" id="btnStop" onclick="stopTracking()" style="display:none;">⏹ Stop</button>
             <button class="btn btn-share" id="btnShare" onclick="prepareShare()" style="display:none;">💾 Simpan</button>
         </div>
@@ -213,8 +238,8 @@
             <input type="text" id="actName" placeholder="Nama Aktivitas" value="Lari Pagi">
             <select id="actEquipment">
                 <option value="Sepatu Lari">👟 Sepatu Lari</option>
-                <option value="Sepeda"> Sepeda</option>
-                <option value="Jalan Kaki">🚶 Jalan Kaki</option>
+                <option value="Sepeda">🚴 Sepeda</option>
+                <option value="Jalan Kaki"> Jalan Kaki</option>
             </select>
             <div class="btn-group" style="margin-top: 20px;">
                 <button class="btn btn-stop" onclick="closeModal()" style="background: #6c757d;">Batal</button>
@@ -239,10 +264,10 @@
         // KONFIGURASI
         // ==========================================
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbyv6XJPXkUx6CfGxOy8KpelHeRwtb-hBxrfqb2PqeiIrByl6GsNFOjz2T2ZHyapYkel/exec';
-        const DEFAULT_ZOOM = 16; // Zoom level untuk radius ~3000-4000m
-        const MIN_ACCURACY = 30; // Meter, abaikan GPS dengan akurasi > ini
-        const MAX_JUMP = 50; // Meter, abaikan loncatan GPS > ini
-        const AUTO_PAUSE_SPEED = 1.5; // km/jam, di bawah ini = pause
+        const DEFAULT_ZOOM = 16;
+        const MIN_ACCURACY = 30;
+        const MAX_JUMP = 50;
+        const AUTO_PAUSE_SPEED = 1.5;
 
         // ==========================================
         // USER ID
@@ -289,7 +314,8 @@
         let lastPosition = null;
         let routeCoords = [];
         let currentMapImage = null;
-        let gpsFound = false;
+        let gpsReady = false;
+        let gpsFirstLock = false;
 
         // ==========================================
         // FUNGSI PETA & MARKER
@@ -327,7 +353,7 @@
                 icon: createStartIcon(),
                 title: 'Titik Mulai'
             }).addTo(map);
-            startMarker.bindPopup('<b> Titik Mulai</b>').openPopup();
+            startMarker.bindPopup('<b>🚩 Titik Mulai</b>').openPopup();
         }
 
         function centerMap() {
@@ -345,7 +371,6 @@
             }
         }
 
-        // Deteksi interaksi user dengan peta
         map.on('dragstart zoomstart', () => {
             if (isTracking) userInteracted = true;
         });
@@ -391,48 +416,62 @@
             document.getElementById('paceDisplay').innerText = `${paceMins}:${String(paceSecs).padStart(2,'0')}`;
         }
 
-        function updateStatus(text, paused = false) {
+        function updateStatus(text, statusClass = '') {
             document.getElementById('statusText').innerText = text;
             const dot = document.getElementById('statusDot');
-            dot.classList.toggle('paused', paused);
+            dot.className = 'status-dot ' + statusClass;
         }
 
         // ==========================================
-        // GPS HANDLER
+        // GPS HANDLER - DIPANGGIL SAAT APLIKASI DIBUKA
         // ==========================================
         function onGeoSuccess(position) {
             const { latitude: lat, longitude: lng, accuracy } = position.coords;
             
-            // Update info akurasi
             document.getElementById('accuracyInfo').innerText = `Akurasi: ${Math.round(accuracy)}m`;
             
-            // Filter GPS tidak akurat
             if (accuracy > MIN_ACCURACY) return;
 
             const currentPos = { lat, lng, timestamp: Date.now() };
-
-            // Update marker posisi saat ini (selalu update, bahkan sebelum tracking)
             updateCurrentMarker(lat, lng);
 
+            // GPS pertama kali ditemukan
+            if (!gpsFirstLock) {
+                gpsFirstLock = true;
+                gpsReady = true;
+                
+                // Sembunyikan loading screen
+                document.getElementById('gpsLoading').classList.add('hidden');
+                
+                // Peta ke lokasi user dengan animasi
+                map.setView([lat, lng], DEFAULT_ZOOM, { animate: true });
+                
+                // Update status
+                updateStatus('✅ GPS Siap - Tekan Mulai', 'ready');
+                
+                // Enable tombol Mulai
+                document.getElementById('btnStart').disabled = false;
+                
+                lastPosition = currentPos;
+                return;
+            }
+
             if (isTracking) {
-                // Auto-pause detection
                 const shouldPause = checkAutoPause(currentPos);
                 if (shouldPause && !isPaused) { 
                     isPaused = true; 
-                    updateStatus('⏸ Jeda (berhenti)', true);
+                    updateStatus('⏸ Jeda (berhenti)', 'paused');
                 } else if (!shouldPause && isPaused) { 
                     isPaused = false; 
-                    updateStatus('▶ Berlari...', false);
+                    updateStatus('▶ Berlari...', 'tracking');
                 }
 
-                // Tambahkan titik ke rute HANYA jika tidak pause
                 if (lastPosition && !isPaused) {
                     const dist = getDistanceFromLatLonInM(lastPosition.lat, lastPosition.lng, lat, lng);
                     if (dist < MAX_JUMP) {
                         totalDistance += dist;
                         routeCoords.push([lat, lng]);
                         
-                        // Buat polyline jika belum ada
                         if (!polyline) {
                             polyline = L.polyline(routeCoords, {
                                 color: '#fc4c02',
@@ -446,7 +485,6 @@
                         }
                     }
                 } else if (!lastPosition) {
-                    // Titik pertama - buat polyline dengan 1 titik (akan update saat titik ke-2 datang)
                     routeCoords.push([lat, lng]);
                     polyline = L.polyline(routeCoords, {
                         color: '#fc4c02',
@@ -461,7 +499,6 @@
                 document.getElementById('distDisplay').innerText = (totalDistance / 1000).toFixed(2);
                 lastPosition = currentPos;
 
-                // Auto-follow jika user tidak interaksi manual
                 if (autoFollow && !userInteracted) {
                     map.panTo([lat, lng], { animate: true, duration: 0.5 });
                 }
@@ -474,57 +511,45 @@
             if (error.code === 1) msg = "Izin lokasi ditolak. Aktifkan di settings browser.";
             else if (error.code === 2) msg = "GPS tidak tersedia.";
             else if (error.code === 3) msg = "Timeout GPS. Coba di area terbuka.";
-            alert(msg);
+            
+            document.getElementById('gpsLoading').querySelector('.gps-loading-text').innerText = 'Gagal';
+            document.getElementById('gpsLoading').querySelector('.gps-loading-sub').innerText = msg;
         }
 
         // ==========================================
         // KONTROL TRACKING
         // ==========================================
         function startTracking() {
-            // Reset semua state
             isTracking = true;
             isPaused = false;
-            gpsFound = false;
             userInteracted = false;
             startTime = Date.now();
             elapsedPausedTime = 0;
             totalDistance = 0;
             routeCoords = [];
-            lastPosition = null;
             
-            // Hapus marker & polyline lama
             if (polyline) { map.removeLayer(polyline); polyline = null; }
-            if (currentMarker) { map.removeLayer(currentMarker); currentMarker = null; }
             if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
             
-            // UI Updates
             timerInterval = setInterval(updateTimer, 1000);
-            document.getElementById('statusBar').classList.add('active');
-            document.getElementById('btnFollow').classList.add('active');
-            updateStatus('📡 Mencari GPS...');
+            updateStatus('▶ Berlari...', 'tracking');
             
             document.getElementById('btnStart').style.display = 'none';
             document.getElementById('btnStop').style.display = 'block';
             document.getElementById('btnShare').style.display = 'none';
             
-            // Mulai watch GPS
-            if (navigator.geolocation) {
-                watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, {
-                    enableHighAccuracy: true,
-                    maximumAge: 0,
-                    timeout: 15000
-                });
-            } else {
-                alert("Browser Anda tidak mendukung GPS.");
+            // Tambahkan marker start di posisi saat ini
+            if (lastPosition) {
+                addStartMarker(lastPosition.lat, lastPosition.lng);
             }
         }
 
         function stopTracking() {
             isTracking = false;
             clearInterval(timerInterval);
-            if (watchId) navigator.geolocation.clearWatch(watchId);
             
-            document.getElementById('statusBar').classList.remove('active');
+            updateStatus('✅ Selesai - Simpan aktivitas', 'ready');
+            
             document.getElementById('btnStop').style.display = 'none';
             document.getElementById('btnShare').style.display = 'block';
             document.getElementById('saveModal').style.display = 'flex';
@@ -586,7 +611,7 @@
                         if (navigator.canShare({ files: [file] })) {
                             await navigator.share({
                                 title: name,
-                                text: `🏃 ${name}\n ${activity.dist} km | ⏱ ${activity.time}\n⚡ Pace: ${activity.pace}\n👟 ${equipment}\n\n#VeloRun`,
+                                text: `🏃 ${name}\n📏 ${activity.dist} km | ⏱ ${activity.time}\n⚡ Pace: ${activity.pace}\n ${equipment}\n\n#VeloRun`,
                                 files: [file]
                             });
                         }
@@ -647,7 +672,7 @@
                         <div class="activity-item">
                             <div class="activity-info">
                                 <h4>${act.name}</h4>
-                                <p> ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
+                                <p>📏 ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
                                 <p>👟 ${act.equipment} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                             </div>
                         </div>
@@ -674,14 +699,15 @@
 
         function resetUI() {
             document.getElementById('btnStart').style.display = 'block';
+            document.getElementById('btnStart').disabled = false;
             document.getElementById('btnShare').style.display = 'none';
             document.getElementById('timeDisplay').innerText = "00:00:00";
             document.getElementById('distDisplay').innerText = "0.00";
             document.getElementById('paceDisplay').innerText = "0:00";
             if (polyline) { map.removeLayer(polyline); polyline = null; }
-            if (currentMarker) { map.removeLayer(currentMarker); currentMarker = null; }
             if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
             routeCoords = [];
+            updateStatus('✅ GPS Siap - Tekan Mulai', 'ready');
         }
 
         function blobToBase64(blob) {
@@ -692,6 +718,25 @@
                 reader.readAsDataURL(blob);
             });
         }
+
+        // ==========================================
+        // INISIALISASI GPS SAAT APLIKASI DIBUKA
+        // ==========================================
+        function initGPS() {
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 15000
+                });
+            } else {
+                document.getElementById('gpsLoading').querySelector('.gps-loading-text').innerText = 'GPS Tidak Didukung';
+                document.getElementById('gpsLoading').querySelector('.gps-loading-sub').innerText = 'Browser Anda tidak mendukung GPS';
+            }
+        }
+
+        // Panggil initGPS saat aplikasi load
+        window.addEventListener('load', initGPS);
 
         // ==========================================
         // PWA
