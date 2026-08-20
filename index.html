@@ -82,20 +82,6 @@
         }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        /* Floating Buttons */
-        .floating-btn {
-            position: absolute; right: 16px; z-index: 999;
-            width: 48px; height: 48px; border-radius: 50%;
-            background: white; border: none; cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; transition: transform 0.2s;
-        }
-        .floating-btn:active { transform: scale(0.9); }
-        /* Tombol center dihapus, follow button diposisikan lebih rendah */
-        #btnFollow { bottom: 280px; }
-        #btnFollow.active { background: #1a73e8; color: white; }
-        
         /* Status Bar */
         .status-bar {
             position: absolute; top: 16px; left: 16px; right: 16px;
@@ -185,9 +171,6 @@
         <div class="accuracy-info" id="accuracyInfo">Akurasi: -</div>
     </div>
     
-    <!-- Floating Buttons (Tombol Center Dihapus) -->
-    <button class="floating-btn" id="btnFollow" onclick="toggleFollow()" title="Auto-follow">📍</button>
-    
     <div id="loading">
         <div class="spinner"></div>
         <div class="loading-text" id="loadingText">Menyimpan ke VeloRun Cloud...</div>
@@ -209,7 +192,7 @@
             </div>
         </div>
         <div class="btn-group">
-            <button class="btn btn-icon" onclick="showHistory()">📋</button>
+            <button class="btn btn-icon" onclick="showHistory()"></button>
             <button class="btn btn-start" id="btnStart" onclick="startTracking()" disabled>▶ Mulai</button>
             <button class="btn btn-stop" id="btnStop" onclick="stopTracking()" style="display:none;">⏹ Stop</button>
             <button class="btn btn-share" id="btnShare" onclick="prepareShare()" style="display:none;">💾 Simpan</button>
@@ -223,8 +206,8 @@
             <input type="text" id="actName" placeholder="Nama Aktivitas" value="Lari Pagi">
             <select id="actEquipment">
                 <option value="Sepatu Lari">👟 Sepatu Lari</option>
-                <option value="Sepeda">🚴 Sepeda</option>
-                <option value="Jalan Kaki"> Jalan Kaki</option>
+                <option value="Sepeda"> Sepeda</option>
+                <option value="Jalan Kaki">🚶 Jalan Kaki</option>
             </select>
             <div class="btn-group" style="margin-top: 20px;">
                 <button class="btn btn-stop" onclick="closeModal()" style="background: #6c757d;">Batal</button>
@@ -253,7 +236,7 @@
         const MIN_ACCURACY = 30;
         const MAX_JUMP = 50;
         const AUTO_PAUSE_SPEED = 1.5;
-        const AUTO_CENTER_DELAY = 5000; // 5 detik delay sebelum auto-center
+        const AUTO_CENTER_DELAY = 5000; // 5 detik sebelum kembali auto-follow
 
         // ==========================================
         // USER ID
@@ -283,7 +266,7 @@
         L.control.zoom({ position: 'topright' }).addTo(map);
 
         // ==========================================
-        // VARIABEL TRACKING & AUTO-CENTER
+        // VARIABEL
         // ==========================================
         let polyline = null;
         let currentMarker = null;
@@ -291,8 +274,7 @@
         let watchId = null;
         let isTracking = false;
         let isPaused = false;
-        let autoFollow = true;
-        let userInteracted = false;
+        let userInteracted = false; // True saat user geser peta manual
         let autoCenterTimer = null; // Timer untuk auto-center
         let startTime = 0;
         let elapsedPausedTime = 0;
@@ -301,7 +283,6 @@
         let lastPosition = null;
         let routeCoords = [];
         let currentMapImage = null;
-        let gpsReady = false;
         let gpsFirstLock = false;
 
         // ==========================================
@@ -343,37 +324,34 @@
             startMarker.bindPopup('<b>🚩 Titik Mulai</b>').openPopup();
         }
 
-        // Fungsi untuk memusatkan peta ke user
+        // Paksa peta kembali ke posisi user
         function forceCenterMap() {
             if (lastPosition) {
-                map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true, duration: 1 });
+                map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { 
+                    animate: true, 
+                    duration: 0.8 
+                });
                 userInteracted = false;
             }
         }
 
-        function toggleFollow() {
-            autoFollow = !autoFollow;
-            document.getElementById('btnFollow').classList.toggle('active', autoFollow);
-            if (autoFollow) {
-                forceCenterMap();
-            }
-        }
-
         // ==========================================
-        // LOGIKA AUTO-CENTER (5 DETIK)
+        // LOGIKA AUTO-FOLLOW + AUTO-CENTER 5 DETIK
         // ==========================================
-        // Reset timer saat user mulai menggeser/zoom
+        
+        // Saat user mulai menggeser/zoom peta
         map.on('dragstart zoomstart movestart', () => {
             clearTimeout(autoCenterTimer);
             userInteracted = true;
         });
 
-        // Mulai hitung mundur 5 detik setelah user berhenti menggeser
+        // Saat user selesai menggeser/zoom peta
         map.on('dragend zoomend moveend', () => {
-            if (userInteracted && lastPosition && gpsReady) {
+            if (userInteracted && lastPosition) {
                 clearTimeout(autoCenterTimer);
+                // Mulai hitung mundur 5 detik
                 autoCenterTimer = setTimeout(() => {
-                    // Cek lagi apakah user tidak berinteraksi selama 5 detik
+                    // Cek lagi apakah user tidak berinteraksi
                     if (userInteracted) {
                         forceCenterMap();
                     }
@@ -444,7 +422,6 @@
             // GPS pertama kali ditemukan
             if (!gpsFirstLock) {
                 gpsFirstLock = true;
-                gpsReady = true;
                 
                 document.getElementById('gpsLoading').classList.add('hidden');
                 map.setView([lat, lng], DEFAULT_ZOOM, { animate: true });
@@ -456,7 +433,7 @@
                 return;
             }
 
-            // Update posisi terakhir untuk auto-center
+            // Update posisi terakhir
             lastPosition = currentPos;
 
             if (isTracking) {
@@ -470,17 +447,11 @@
                 }
 
                 // Tambahkan titik ke rute
-                if (lastPosition && !isPaused) {
-                    // Kita perlu posisi sebelumnya untuk hitung jarak, tapi lastPosition sudah diupdate di atas.
-                    // Untuk akurasi, kita simpan previous position di variabel terpisah saat tracking
-                }
-                
-                // Logika rute yang lebih aman
-                if (routeCoords.length > 0) {
+                if (routeCoords.length > 0 && !isPaused) {
                     const prevPos = routeCoords[routeCoords.length - 1];
                     const dist = getDistanceFromLatLonInM(prevPos[0], prevPos[1], lat, lng);
                     
-                    if (dist < MAX_JUMP && !isPaused) {
+                    if (dist < MAX_JUMP) {
                         totalDistance += dist;
                         routeCoords.push([lat, lng]);
                         
@@ -493,8 +464,7 @@
                             polyline.addLatLng([lat, lng]);
                         }
                     }
-                } else if (!isPaused) {
-                    // Titik pertama saat tracking dimulai
+                } else if (routeCoords.length === 0 && !isPaused) {
                     routeCoords.push([lat, lng]);
                     polyline = L.polyline(routeCoords, {
                         color: '#fc4c02', weight: 5, opacity: 0.9,
@@ -504,8 +474,8 @@
 
                 document.getElementById('distDisplay').innerText = (totalDistance / 1000).toFixed(2);
 
-                // Auto-pan saat tracking (jika user tidak interaksi manual)
-                if (autoFollow && !userInteracted) {
+                // Auto-follow: Peta mengikuti user jika tidak ada interaksi manual
+                if (!userInteracted) {
                     map.panTo([lat, lng], { animate: true, duration: 0.5 });
                 }
             }
@@ -528,7 +498,7 @@
         function startTracking() {
             isTracking = true;
             isPaused = false;
-            userInteracted = false; // Reset interaksi agar auto-center aktif
+            userInteracted = false; // Reset agar auto-follow aktif
             startTime = Date.now();
             elapsedPausedTime = 0;
             totalDistance = 0;
@@ -544,10 +514,10 @@
             document.getElementById('btnStop').style.display = 'block';
             document.getElementById('btnShare').style.display = 'none';
             
-            // Tambahkan marker start di posisi saat ini
+            // Tambahkan marker start
             if (lastPosition) {
                 addStartMarker(lastPosition.lat, lastPosition.lng);
-                forceCenterMap(); // Paksa center saat mulai
+                forceCenterMap(); // Center peta saat mulai tracking
             }
         }
 
@@ -617,7 +587,7 @@
                         if (navigator.canShare({ files: [file] })) {
                             await navigator.share({
                                 title: name,
-                                text: `🏃 ${name}\n📏 ${activity.dist} km |  ${activity.time}\n⚡ Pace: ${activity.pace}\n👟 ${equipment}\n\n#VeloRun`,
+                                text: ` ${name}\n📏 ${activity.dist} km | ⏱ ${activity.time}\n Pace: ${activity.pace}\n👟 ${equipment}\n\n#VeloRun`,
                                 files: [file]
                             });
                         }
@@ -674,8 +644,8 @@
                         <div class="activity-item">
                             <div class="activity-info">
                                 <h4>${act.name}</h4>
-                                <p>📏 ${act.distance} km | ⏱ ${act.duration} |  ${act.pace}</p>
-                                <p>👟 ${act.equipment} |  ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                <p>📏 ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
+                                <p>👟 ${act.equipment} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                             </div>
                         </div>
                     `).join('');
