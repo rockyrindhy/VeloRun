@@ -23,26 +23,14 @@
             --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
         }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent;
-            -webkit-font-smoothing: antialiased;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; }
         
-        body, html { 
-            margin: 0; padding: 0; height: 100%; 
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
-            background: #E2E8F0; /* Fallback */
-            overflow: hidden;
-        }
-        
+        body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif; background: #E2E8F0; overflow: hidden; }
         #map { width: 100%; height: 100%; z-index: 1; }
         
-        /* --- MARKERS --- */
         .current-position-marker {
             background: radial-gradient(circle at 30% 30%, #FFB366, var(--primary-orange));
-            border: 3px solid white;
-            border-radius: 50%;
+            border: 3px solid white; border-radius: 50%;
             box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.2), 0 4px 12px rgba(0,0,0,0.3);
             animation: pulse 2s infinite;
         }
@@ -58,12 +46,10 @@
         .start-marker {
             background: radial-gradient(circle at 30% 30%, #ffffff, #000000);
             border: 3px solid var(--primary-orange);
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
+            border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
-        /* --- GLASSMORPHISM BASE --- */
         .glass-panel {
             background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
             backdrop-filter: blur(24px) saturate(180%);
@@ -72,150 +58,56 @@
             box-shadow: var(--glass-shadow);
         }
 
-        /* Glossy "Wet" Highlight */
         .glossy-highlight::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 55%;
             background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.1) 100%);
             border-radius: inherit; pointer-events: none; z-index: 0;
         }
 
-        /* --- CONTROL PANEL (BOTTOM) --- */
-        .overlay {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            border-radius: 32px 32px 0 0; padding: 24px 20px 32px;
-            z-index: 1000;
-        }
-        
+        .overlay { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 32px 32px 0 0; padding: 24px 20px 32px; z-index: 1000; }
         .stats { display: flex; justify-content: space-between; margin-bottom: 20px; position: relative; z-index: 1; }
-        
-        .stat-item { 
-            flex: 1; text-align: center; padding: 14px 8px; margin: 0 6px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 20px; border: 1px solid rgba(255,255,255,0.8);
-            box-shadow: inset 0 2px 4px rgba(255,255,255,1), 0 4px 8px rgba(0,0,0,0.05);
-        }
-        
-        .stat-value { 
-            font-size: 24px; font-weight: 800; color: var(--primary-orange);
-            text-shadow: 0 1px 2px rgba(255, 107, 0, 0.2); letter-spacing: -0.5px;
-        }
-        
-        .stat-label { 
-            font-size: 10px; color: var(--text-black); text-transform: uppercase; 
-            font-weight: 700; margin-top: 4px; letter-spacing: 0.5px; opacity: 0.7;
-        }
+        .stat-item { flex: 1; text-align: center; padding: 14px 8px; margin: 0 6px; background: rgba(255,255,255,0.5); border-radius: 20px; border: 1px solid rgba(255,255,255,0.8); box-shadow: inset 0 2px 4px rgba(255,255,255,1), 0 4px 8px rgba(0,0,0,0.05); }
+        .stat-value { font-size: 24px; font-weight: 800; color: var(--primary-orange); text-shadow: 0 1px 2px rgba(255, 107, 0, 0.2); letter-spacing: -0.5px; }
+        .stat-label { font-size: 10px; color: var(--text-black); text-transform: uppercase; font-weight: 700; margin-top: 4px; letter-spacing: 0.5px; opacity: 0.7; }
         
         .btn-group { display: flex; gap: 12px; justify-content: center; position: relative; z-index: 1; }
-        
-        .btn {
-            flex: 1; padding: 16px; border: none; border-radius: 20px;
-            font-size: 15px; font-weight: 700; cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative; overflow: hidden;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
-        }
-        
+        .btn { flex: 1; padding: 16px; border: none; border-radius: 20px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8); }
         .btn:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
         .btn svg { width: 20px; height: 20px; }
-        
-        /* Glossy Orange Button */
-        .btn-primary { 
-            background: linear-gradient(180deg, #FF8C00 0%, var(--primary-orange) 50%, var(--primary-orange-dark) 100%);
-            color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
-        
-        /* Glossy Black Button */
-        .btn-dark { 
-            background: linear-gradient(180deg, #334155 0%, #0F172A 50%, #020617 100%);
-            color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-        }
-        
-        /* Glossy Glass Button (Secondary) */
-        .btn-glass { 
-            background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(241,245,249,0.8) 100%);
-            color: var(--text-black); border: 1px solid rgba(255,255,255,1);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1);
-        }
-        
+        .btn-primary { background: linear-gradient(180deg, #FF8C00 0%, var(--primary-orange) 50%, var(--primary-orange-dark) 100%); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .btn-dark { background: linear-gradient(180deg, #334155 0%, #0F172A 50%, #020617 100%); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .btn-glass { background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(241,245,249,0.8) 100%); color: var(--text-black); border: 1px solid rgba(255,255,255,1); box-shadow: 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1); }
         .btn-icon { flex: 0.35; padding: 16px 8px; }
         .btn:disabled { opacity: 0.5; filter: grayscale(0.8); cursor: not-allowed; }
 
-        /* --- STATUS BAR (TOP) --- */
-        .status-bar {
-            position: absolute; top: 16px; left: 16px; right: 16px;
-            padding: 12px 18px; border-radius: 24px; z-index: 999;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        
+        .status-bar { position: absolute; top: 16px; left: 16px; right: 16px; padding: 12px 18px; border-radius: 24px; z-index: 999; display: flex; align-items: center; justify-content: space-between; }
         .status-indicator { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: var(--text-black); position: relative; z-index: 1; }
-        
         .status-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
         .status-dot.ready { background: #10B981; color: #10B981; animation: blink 1.5s infinite; }
         .status-dot.tracking { background: var(--primary-orange); color: var(--primary-orange); animation: blink 1s infinite; }
         .status-dot.paused { background: #F59E0B; color: #F59E0B; animation: none; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        
         .accuracy-info { font-size: 12px; color: var(--text-grey); font-weight: 600; position: relative; z-index: 1; }
 
-        /* --- LOADING & MODALS --- */
-        .gps-loading, #loading {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(16px);
-            z-index: 3000; display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
+        .gps-loading, #loading { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(16px); z-index: 3000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .gps-loading.hidden, #loading { display: none; }
-        #loading { display: none; } /* Override for JS toggle */
-        
-        .spinner {
-            width: 64px; height: 64px; border-radius: 50%;
-            border: 4px solid rgba(255, 107, 0, 0.1);
-            border-top-color: var(--primary-orange);
-            border-right-color: var(--text-black);
-            animation: spin 1s linear infinite; margin-bottom: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
+        #loading { display: none; }
+        .spinner { width: 64px; height: 64px; border-radius: 50%; border: 4px solid rgba(255, 107, 0, 0.1); border-top-color: var(--primary-orange); border-right-color: var(--text-black); animation: spin 1s linear infinite; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        
         .loading-text, .gps-loading-text { color: var(--text-black); font-size: 18px; font-weight: 800; margin-bottom: 8px; position: relative; z-index: 1; }
         .gps-loading-sub { color: var(--text-grey); font-size: 14px; text-align: center; padding: 0 30px; position: relative; z-index: 1; }
 
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px);
-            z-index: 2000; justify-content: center; align-items: center; padding: 20px;
-        }
-        
-        .modal-content {
-            padding: 28px; border-radius: 28px; width: 100%; max-width: 400px;
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { padding: 28px; border-radius: 28px; width: 100%; max-width: 400px; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
         @keyframes slideUp { from { transform: translateY(40px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
-        
         .modal-content h3 { margin: 0 0 20px 0; color: var(--text-black); font-size: 22px; font-weight: 800; position: relative; z-index: 1; }
-        
-        .modal-content input, .modal-content select {
-            width: 100%; padding: 16px; margin: 12px 0;
-            background: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,1);
-            border-radius: 16px; font-size: 16px; color: var(--text-black); font-weight: 600;
-            outline: none; transition: all 0.2s; position: relative; z-index: 1;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .modal-content input:focus, .modal-content select:focus { 
-            border-color: var(--primary-orange); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.2), inset 0 2px 4px rgba(0,0,0,0.05);
-        }
+        .modal-content input, .modal-content select { width: 100%; padding: 16px; margin: 12px 0; background: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,1); border-radius: 16px; font-size: 16px; color: var(--text-black); font-weight: 600; outline: none; transition: all 0.2s; position: relative; z-index: 1; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .modal-content input:focus, .modal-content select:focus { border-color: var(--primary-orange); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.2), inset 0 2px 4px rgba(0,0,0,0.05); }
         .modal-content select option { background: white; color: var(--text-black); }
-
         .activity-list { max-height: 55vh; overflow-y: auto; position: relative; z-index: 1; padding-right: 4px; }
-        .activity-item {
-            background: rgba(255,255,255,0.6); padding: 16px; margin: 10px 0; border-radius: 16px;
-            border-left: 4px solid var(--primary-orange);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1);
-        }
+        .activity-item { background: rgba(255,255,255,0.6); padding: 16px; margin: 10px 0; border-radius: 16px; border-left: 4px solid var(--primary-orange); box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1); }
         .activity-info h4 { margin: 0 0 8px 0; color: var(--text-black); font-size: 16px; font-weight: 800; }
         .activity-info p { margin: 4px 0; font-size: 13px; color: var(--text-grey); font-weight: 600; }
-
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 107, 0, 0.3); border-radius: 10px; }
@@ -225,14 +117,12 @@
 
     <div id="map"></div>
     
-    <!-- GPS Loading Screen -->
     <div class="gps-loading" id="gpsLoading">
         <div class="spinner"></div>
         <div class="gps-loading-text">Mencari lokasi Anda...</div>
         <div class="gps-loading-sub">Pastikan GPS aktif dan izinkan akses lokasi</div>
     </div>
     
-    <!-- Status Bar -->
     <div class="status-bar glass-panel glossy-highlight" id="statusBar">
         <div class="status-indicator">
             <div class="status-dot" id="statusDot"></div>
@@ -246,23 +136,19 @@
         <div class="loading-text" id="loadingText">Menyimpan ke Cloud...</div>
     </div>
 
-    <!-- Control Panel -->
     <div class="overlay glass-panel glossy-highlight" id="controlPanel">
         <div class="stats">
             <div class="stat-item">
-                <!-- Clock Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--primary-orange)" style="width:18px; height:18px; margin:0 auto 4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
                 <div class="stat-value" id="timeDisplay">00:00:00</div>
                 <div class="stat-label">Waktu</div>
             </div>
             <div class="stat-item">
-                <!-- Map Pin Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--primary-orange)" style="width:18px; height:18px; margin:0 auto 4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
                 <div class="stat-value" id="distDisplay">0.00</div>
                 <div class="stat-label">Kilometer</div>
             </div>
             <div class="stat-item">
-                <!-- Bolt/Speed Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--primary-orange)" style="width:18px; height:18px; margin:0 auto 4px;"><path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg>
                 <div class="stat-value" id="paceDisplay">0:00</div>
                 <div class="stat-label">Pace</div>
@@ -270,28 +156,23 @@
         </div>
         <div class="btn-group">
             <button class="btn btn-glass btn-icon" onclick="showHistory()">
-                <!-- Clipboard/List Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>
             </button>
             <button class="btn btn-primary" id="btnStart" onclick="startTracking()" disabled>
-                <!-- Play Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clip-rule="evenodd" /></svg>
                 Mulai
             </button>
             <button class="btn btn-dark" id="btnStop" onclick="stopTracking()" style="display:none;">
-                <!-- Stop Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 7.5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9Z" clip-rule="evenodd" /></svg>
                 Stop
             </button>
             <button class="btn btn-primary" id="btnShare" onclick="prepareShare()" style="display:none;">
-                <!-- Cloud Upload Icon -->
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5ZM2.25 10.5a8.25 8.25 0 1 1 14.59 5.28l4.69 4.69a.75.75 0 1 1-1.06 1.06l-4.69-4.69A8.25 8.25 0 0 1 2.25 10.5Z" clip-rule="evenodd" /></svg>
                 Simpan
             </button>
         </div>
     </div>
 
-    <!-- Modal Save -->
     <div class="modal" id="saveModal">
         <div class="modal-content glass-panel glossy-highlight">
             <h3>Simpan Aktivitas</h3>
@@ -303,12 +184,10 @@
             </select>
             <div class="btn-group" style="margin-top: 24px;">
                 <button class="btn btn-glass" onclick="closeModal()">
-                    <!-- X Mark Icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                     Batal
                 </button>
                 <button class="btn btn-primary" onclick="saveActivity()">
-                    <!-- Check Icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 0 1 1.04-.208Z" clip-rule="evenodd" /></svg>
                     Simpan
                 </button>
@@ -316,7 +195,6 @@
         </div>
     </div>
 
-    <!-- Modal History -->
     <div class="modal" id="historyModal">
         <div class="modal-content glass-panel glossy-highlight">
             <h3>Riwayat Aktivitas</h3>
@@ -331,9 +209,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
-        // ==========================================
-        // KONFIGURASI & VARIABEL (SAMA SEPERTI SEBELUMNYA)
-        // ==========================================
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbyv6XJPXkUx6CfGxOy8KpelHeRwtb-hBxrfqb2PqeiIrByl6GsNFOjz2T2ZHyapYkel/exec';
         const DEFAULT_ZOOM = 16;
         const MIN_ACCURACY = 30;
@@ -359,12 +234,8 @@
         let startTime = 0, elapsedPausedTime = 0, timerInterval = null;
         let totalDistance = 0, lastPosition = null, routeCoords = [], currentMapImage = null, gpsFirstLock = false;
 
-        function createCurrentPositionIcon() {
-            return L.divIcon({ className: 'current-position-marker', iconSize: [20, 20], iconAnchor: [10, 10] });
-        }
-        function createStartIcon() {
-            return L.divIcon({ className: 'start-marker', iconSize: [16, 16], iconAnchor: [8, 16] });
-        }
+        function createCurrentPositionIcon() { return L.divIcon({ className: 'current-position-marker', iconSize: [20, 20], iconAnchor: [10, 10] }); }
+        function createStartIcon() { return L.divIcon({ className: 'start-marker', iconSize: [16, 16], iconAnchor: [8, 16] }); }
         function updateCurrentMarker(lat, lng) {
             if (!currentMarker) currentMarker = L.marker([lat, lng], { icon: createCurrentPositionIcon(), zIndexOffset: 1000 }).addTo(map);
             else currentMarker.setLatLng([lat, lng]);
@@ -374,10 +245,7 @@
             startMarker = L.marker([lat, lng], { icon: createStartIcon(), title: 'Titik Mulai' }).addTo(map);
         }
         function forceCenterMap() {
-            if (lastPosition) {
-                map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true, duration: 0.8 });
-                userInteracted = false;
-            }
+            if (lastPosition) { map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true, duration: 0.8 }); userInteracted = false; }
         }
 
         map.on('dragstart zoomstart movestart', () => { clearTimeout(autoCenterTimer); userInteracted = true; });
@@ -489,11 +357,45 @@
         function closeModal() { document.getElementById('saveModal').style.display = 'none'; }
         function closeHistory() { document.getElementById('historyModal').style.display = 'none'; }
 
+        // FIXED: Compress image before sending
+        async function prepareShare() {
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('loadingText').innerText = 'Membuat gambar peta...';
+            try {
+                const mapElement = document.getElementById('map');
+                await new Promise(r => setTimeout(r, 500));
+                
+                // REDUCED scale from 2 to 1.5 to reduce file size
+                const canvas = await html2canvas(mapElement, { 
+                    useCORS: true, 
+                    allowTaint: true, 
+                    backgroundColor: '#ffffff', 
+                    scale: 1.5  // Changed from 2 to 1.5
+                });
+                
+                // COMPRESS as JPEG with 70% quality instead of PNG
+                currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.7));
+                
+                console.log('Image size:', currentMapImage.size, 'bytes');
+                saveActivity();
+            } catch (error) {
+                console.error('Error:', error);
+                currentMapImage = null;
+                saveActivity();
+            }
+        }
+
         async function saveActivity() {
             const name = document.getElementById('actName').value || 'Aktivitas VeloRun';
             const equipment = document.getElementById('actEquipment').value;
             const userId = getUserId();
-            const activity = { name, equipment, time: document.getElementById('timeDisplay').innerText, dist: document.getElementById('distDisplay').innerText, pace: document.getElementById('paceDisplay').innerText, route: routeCoords };
+            const activity = { 
+                name, equipment, 
+                time: document.getElementById('timeDisplay').innerText, 
+                dist: document.getElementById('distDisplay').innerText, 
+                pace: document.getElementById('paceDisplay').innerText, 
+                route: routeCoords 
+            };
 
             document.getElementById('loading').style.display = 'flex';
             document.getElementById('loadingText').innerText = 'Menyimpan ke Cloud...';
@@ -501,40 +403,56 @@
 
             try {
                 let imageData = null;
-                if (currentMapImage) imageData = await blobToBase64(currentMapImage);
-                const payload = { userId, name: activity.name, equipment: activity.equipment, distance: parseFloat(activity.dist), duration: activity.time, pace: activity.pace, route: activity.route, imageData };
-                const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+                if (currentMapImage) {
+                    imageData = await blobToBase64(currentMapImage);
+                    console.log('Base64 length:', imageData.length);
+                }
+
+                const payload = { 
+                    userId, 
+                    name: activity.name, 
+                    equipment: activity.equipment, 
+                    distance: parseFloat(activity.dist), 
+                    duration: activity.time, 
+                    pace: activity.pace, 
+                    route: activity.route, 
+                    imageData 
+                };
+
+                const response = await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload) 
+                });
+                
                 const responseText = await response.text();
+                console.log('Response:', responseText);
                 const result = JSON.parse(responseText);
 
                 if (result.success) {
                     alert('✅ Berhasil disimpan!\n\nData: Google Sheets\nGambar: Google Drive');
                     if (navigator.share && currentMapImage) {
-                        const file = new File([currentMapImage], 'velorun.png', { type: 'image/png' });
+                        const file = new File([currentMapImage], 'velorun.jpg', { type: 'image/jpeg' });
                         if (navigator.canShare({ files: [file] })) {
-                            await navigator.share({ title: name, text: `🏃 ${name}\n📏 ${activity.dist} km | ⏱ ${activity.time}\n⚡ Pace: ${activity.pace}\n👟 ${equipment}\n\n#VeloRun`, files: [file] });
+                            await navigator.share({ 
+                                title: name, 
+                                text: `🏃 ${name}\n📏 ${activity.dist} km | ⏱ ${activity.time}\n⚡ Pace: ${activity.pace}\n👟 ${equipment}\n\n#VeloRun`, 
+                                files: [file] 
+                            });
                         }
                     }
                     resetUI();
-                } else { throw new Error(result.error || 'Gagal menyimpan'); }
+                } else { 
+                    throw new Error(result.error || 'Gagal menyimpan'); 
+                }
             } catch (error) {
+                console.error('Error:', error);
                 alert('⚠️ Gagal menyimpan ke cloud. Data disimpan lokal.');
                 const pending = JSON.parse(localStorage.getItem('velorun_pending') || '[]');
                 pending.push({ activity, timestamp: Date.now() });
                 localStorage.setItem('velorun_pending', JSON.stringify(pending));
-            } finally { document.getElementById('loading').style.display = 'none'; }
-        }
-
-        async function prepareShare() {
-            document.getElementById('loading').style.display = 'flex';
-            document.getElementById('loadingText').innerText = 'Membuat gambar peta...';
-            try {
-                const mapElement = document.getElementById('map');
-                await new Promise(r => setTimeout(r, 800));
-                const canvas = await html2canvas(mapElement, { useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scale: 2 });
-                currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                saveActivity();
-            } catch (error) { currentMapImage = null; saveActivity(); }
+            } finally { 
+                document.getElementById('loading').style.display = 'none'; 
+            }
         }
 
         async function showHistory() {
@@ -552,12 +470,16 @@
                             <div class="activity-info">
                                 <h4>${act.name}</h4>
                                 <p>📏 ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
-                                <p> ${act.equipment} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                <p>👟 ${act.equipment} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                             </div>
                         </div>
                     `).join('');
-                } else { list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-grey);">Belum ada aktivitas.</div>'; }
-            } catch (error) { list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data.</div>'; }
+                } else { 
+                    list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-grey);">Belum ada aktivitas.</div>'; 
+                }
+            } catch (error) { 
+                list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data.</div>'; 
+            }
         }
 
         function resetUI() {
@@ -572,16 +494,26 @@
             routeCoords = [];
             updateStatus('GPS Siap - Tekan Mulai', 'ready');
         }
+        
         function blobToBase64(blob) {
-            return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(blob); });
+            return new Promise((resolve, reject) => { 
+                const reader = new FileReader(); 
+                reader.onloadend = () => resolve(reader.result); 
+                reader.onerror = reject; 
+                reader.readAsDataURL(blob); 
+            });
         }
 
         function initGPS() {
-            if (navigator.geolocation) watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
-            else document.getElementById('gpsLoading').querySelector('.gps-loading-text').innerText = 'GPS Tidak Didukung';
+            if (navigator.geolocation) 
+                watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+            else 
+                document.getElementById('gpsLoading').querySelector('.gps-loading-text').innerText = 'GPS Tidak Didukung';
         }
+        
         window.addEventListener('load', initGPS);
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed:', err));
+        if ('serviceWorker' in navigator) 
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed:', err));
     </script>
 </body>
 </html>
