@@ -304,7 +304,7 @@
             border-bottom: none !important;
         }
 
-        /* ✅ WATERMARK LOGO VELO RUN - TRANSPARAN (seperti watermark foto profesional) */
+        /* ✅ WATERMARK LOGO VELO RUN DI PETA (TRANSPARAN) */
         .velorun-watermark {
             background: transparent !important;
             border: none !important;
@@ -342,7 +342,7 @@
             text-shadow: 0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9) !important;
         }
 
-        /* ✅ WATERMARK DI PREVIEW PETA (Hasil & Detail Riwayat) */
+        /* ✅ WATERMARK DI PREVIEW (TRANSPARAN TANPA TEXT-SHADOW) */
         .preview-watermark {
             position: absolute;
             bottom: 12px;
@@ -359,7 +359,6 @@
             width: 32px;
             height: 32px;
             object-fit: contain;
-            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.9));
         }
 
         .preview-watermark-text {
@@ -369,7 +368,7 @@
             color: white;
             letter-spacing: -0.3px;
             white-space: nowrap;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.95), 0 1px 3px rgba(0,0,0,0.9);
+            /* ✅ TANPA TEXT-SHADOW */
         }
 
         .preview-watermark-by {
@@ -377,7 +376,81 @@
             font-weight: 600;
             color: rgba(255,255,255,0.95);
             margin-top: -2px;
-            text-shadow: 0 1px 5px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.9);
+            /* ✅ TANPA TEXT-SHADOW */
+        }
+
+        /* ✅ OVERLAY INFO AKTIVITAS UNTUK GAMBAR TERSIMPAN */
+        .save-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            z-index: 997;
+            min-width: 220px;
+            max-width: 280px;
+            border: 1px solid rgba(255, 107, 0, 0.2);
+        }
+
+        .save-overlay-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-orange);
+        }
+
+        .save-overlay-header img {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+        }
+
+        .save-overlay-title {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--primary-orange);
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+
+        .save-overlay-subtitle {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-black);
+            margin-top: 2px;
+            letter-spacing: 0.3px;
+        }
+
+        .save-overlay-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .save-overlay-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .save-overlay-label {
+            font-weight: 700;
+            color: var(--primary-orange);
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .save-overlay-value {
+            font-weight: 700;
+            color: var(--text-black);
+            font-size: 12px;
         }
         
         ::-webkit-scrollbar { width: 6px; }
@@ -580,7 +653,7 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: 'anonymous' }).addTo(map);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // ✅ WATERMARK LOGO VELO RUN DI POJOK KIRI BAWAH PETA (TRANSPARAN)
+        // ✅ WATERMARK LOGO VELO RUN DI POJOK KIRI BAWAH PETA
         const watermarkControl = L.control({ position: 'bottomleft' });
 
         watermarkControl.onAdd = function(map) {
@@ -608,12 +681,11 @@
         let savedActivityData = null;
         let turnMarkers = [];
 
-        // ✅ FUNGSI: Tambahkan watermark ke container preview
+        // ✅ FUNGSI: Tambahkan watermark ke container preview (TANPA TEXT-SHADOW)
         function addPreviewWatermark(containerId) {
             const container = document.getElementById(containerId);
             if (!container) return;
             
-            // Hapus watermark lama jika ada
             const oldWatermark = container.querySelector('.preview-watermark');
             if (oldWatermark) oldWatermark.remove();
             
@@ -628,6 +700,70 @@
             `;
             
             container.appendChild(watermark);
+        }
+
+        // ✅ FUNGSI BARU: Tambahkan overlay info aktivitas untuk gambar tersimpan
+        function addSaveOverlay(activityData) {
+            const mapElement = document.getElementById('map');
+            
+            // Hapus overlay lama jika ada
+            const oldOverlay = document.getElementById('saveOverlay');
+            if (oldOverlay) oldOverlay.remove();
+            
+            const date = new Date();
+            const dateStr = date.toLocaleDateString('id-ID', { 
+                weekday: 'short', 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'saveOverlay';
+            overlay.className = 'save-overlay';
+            overlay.innerHTML = `
+                <div class="save-overlay-header">
+                    <img src="logo.png" alt="VeloRun" onerror="this.style.display='none'">
+                    <div>
+                        <div class="save-overlay-title">VeloRun</div>
+                        <div class="save-overlay-subtitle">by RockyRindhy</div>
+                    </div>
+                </div>
+                <div class="save-overlay-info">
+                    <div class="save-overlay-row">
+                        <span class="save-overlay-label">Aktivitas</span>
+                        <span class="save-overlay-value">${activityData.name}</span>
+                    </div>
+                    <div class="save-overlay-row">
+                        <span class="save-overlay-label">Tipe</span>
+                        <span class="save-overlay-value">${activityData.equipment}</span>
+                    </div>
+                    <div class="save-overlay-row">
+                        <span class="save-overlay-label">Jarak</span>
+                        <span class="save-overlay-value">${activityData.dist} km</span>
+                    </div>
+                    <div class="save-overlay-row">
+                        <span class="save-overlay-label">Waktu</span>
+                        <span class="save-overlay-value">${activityData.time}</span>
+                    </div>
+                    <div class="save-overlay-row">
+                        <span class="save-overlay-label">Pace</span>
+                        <span class="save-overlay-value">${activityData.pace} /km</span>
+                    </div>
+                    <div class="save-overlay-row">
+                        <span class="save-overlay-label">Tanggal</span>
+                        <span class="save-overlay-value">${dateStr}</span>
+                    </div>
+                </div>
+            `;
+            
+            mapElement.appendChild(overlay);
+        }
+
+        // ✅ FUNGSI BARU: Hapus overlay info aktivitas
+        function removeSaveOverlay() {
+            const overlay = document.getElementById('saveOverlay');
+            if (overlay) overlay.remove();
         }
 
         function updateMarkerColor(isTracking) {
@@ -795,7 +931,14 @@
             const name = document.getElementById('actName').value || 'Aktivitas VeloRun';
             const equipment = document.getElementById('actEquipment').value;
             const userId = getUserId();
-            const activityData = { name, equipment, time: document.getElementById('timeDisplay').innerText, dist: document.getElementById('distDisplay').innerText, pace: document.getElementById('paceDisplay').innerText, route: routeCoords };
+            const activityData = { 
+                name, 
+                equipment, 
+                time: document.getElementById('timeDisplay').innerText, 
+                dist: document.getElementById('distDisplay').innerText, 
+                pace: document.getElementById('paceDisplay').innerText, 
+                route: routeCoords 
+            };
 
             document.getElementById('saveModal').style.display = 'none';
             document.getElementById('loading').style.display = 'flex';
@@ -813,9 +956,26 @@
                 }
 
                 document.getElementById('loadingText').innerText = 'Membuat gambar...';
+                
+                // ✅ TAMBAHKAN OVERLAY INFO AKTIVITAS SEBELUM CAPTURE
+                addSaveOverlay(activityData);
+                
+                // Tunggu sebentar agar overlay ter-render
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
                 const mapElement = document.getElementById('map');
-                const canvas = await html2canvas(mapElement, { useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scale: 1.5, logging: false });
-                currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.7));
+                const canvas = await html2canvas(mapElement, { 
+                    useCORS: true, 
+                    allowTaint: true, 
+                    backgroundColor: '#ffffff', 
+                    scale: 1.5, 
+                    logging: false 
+                });
+                
+                // ✅ HAPUS OVERLAY SETELAH CAPTURE
+                removeSaveOverlay();
+                
+                currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
 
                 map.setView(savedView.center, savedView.zoom, { animate: false });
                 
@@ -826,7 +986,16 @@
                 }
 
                 document.getElementById('loadingText').innerText = 'Menyimpan...';
-                const payload = { userId, name: activityData.name, equipment: activityData.equipment, distance: parseFloat(activityData.dist), duration: activityData.time, pace: activityData.pace, route: activityData.route, imageData };
+                const payload = { 
+                    userId, 
+                    name: activityData.name, 
+                    equipment: activityData.equipment, 
+                    distance: parseFloat(activityData.dist), 
+                    duration: activityData.time, 
+                    pace: activityData.pace, 
+                    route: activityData.route, 
+                    imageData 
+                };
                 const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const responseText = await response.text();
                 const result = JSON.parse(responseText);
@@ -837,9 +1006,12 @@
                 } else { throw new Error(result.error || 'Gagal menyimpan'); }
             } catch (error) {
                 console.error('Error:', error);
+                removeSaveOverlay(); // Pastikan overlay dihapus jika error
                 savedActivityData = activityData;
                 showResultModal(activityData, true);
-            } finally { document.getElementById('loading').style.display = 'none'; }
+            } finally { 
+                document.getElementById('loading').style.display = 'none'; 
+            }
         }
 
         function waitForTilesToLoad() {
@@ -867,7 +1039,7 @@
                 if (imgEl.dataset.oldUrl) URL.revokeObjectURL(imgEl.dataset.oldUrl);
                 imgEl.dataset.oldUrl = imageUrl;
                 
-                // ✅ Tambahkan watermark ke preview hasil
+                // ✅ Tambahkan watermark ke preview hasil (TANPA TEXT-SHADOW)
                 setTimeout(() => addPreviewWatermark('resultPreviewContainer'), 100);
             } else {
                 imgEl.style.display = 'none';
@@ -1052,7 +1224,7 @@
                     imgEl.src = convertedUrl;
                     imgEl.style.display = 'block';
                     
-                    // ✅ Tambahkan watermark ke preview detail
+                    // ✅ Tambahkan watermark ke preview detail (TANPA TEXT-SHADOW)
                     setTimeout(() => addPreviewWatermark('detailPreviewContainer'), 300);
                     
                     imgEl.onerror = function() {
@@ -1110,7 +1282,7 @@
                             <div class="activity-item" onclick="showActivityDetail(window._activities[${index}])">
                                 <div class="activity-info">
                                     <h4>${act.name || 'Tanpa Nama'}</h4>
-                                    <p> ${act.distance || 0} km |  ${act.duration || '-'} | ${act.pace || '-'}</p>
+                                    <p> ${act.distance || 0} km |  ${act.duration || '-'} | ⚡ ${act.pace || '-'}</p>
                                     <p> ${act.equipment || '-'} |  ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                                     <p style="font-size:10px; color:${statusColor};">${statusIcon} ${statusText}</p>
                                 </div>
