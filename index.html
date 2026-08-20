@@ -98,13 +98,49 @@
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         .accuracy-info { font-size: 12px; color: var(--text-grey); font-weight: 600; position: relative; z-index: 1; }
 
-        .gps-loading, #loading { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(16px); z-index: 3000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .gps-loading, #loading { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(255,255,255,0.85); 
+            backdrop-filter: blur(16px); 
+            z-index: 3000; 
+            display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; 
+        }
         .gps-loading.hidden { display: none; }
         #loading { display: none; }
-        .spinner { width: 64px; height: 64px; border-radius: 50%; border: 4px solid rgba(255, 107, 0, 0.1); border-top-color: var(--primary-orange); border-right-color: var(--text-black); animation: spin 1s linear infinite; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        /* ✅ Spinner lebih kecil & elegan */
+        .spinner { 
+            width: 48px; height: 48px; border-radius: 50%; 
+            border: 3px solid rgba(255, 107, 0, 0.1); 
+            border-top-color: var(--primary-orange); 
+            animation: spin 0.8s linear infinite; 
+            margin-bottom: 16px;
+        }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        .loading-text, .gps-loading-text { color: var(--text-black); font-size: 18px; font-weight: 800; margin-bottom: 8px; position: relative; z-index: 1; }
-        .gps-loading-sub { color: var(--text-grey); font-size: 14px; text-align: center; padding: 0 30px; position: relative; z-index: 1; }
+        
+        /* ✅ PERUBAHAN UTAMA: Loading text tipis & kecil */
+        .loading-text, .gps-loading-text { 
+            color: var(--text-black); 
+            font-size: 14px; 
+            font-weight: 400; /* Tipis, tidak bold */
+            letter-spacing: 0.2px;
+            margin-bottom: 4px; 
+            position: relative; 
+            z-index: 1;
+        }
+        
+        /* ✅ Sub text lebih kecil & samar */
+        .gps-loading-sub { 
+            color: var(--text-grey); 
+            font-size: 12px; 
+            font-weight: 400;
+            text-align: center; 
+            padding: 0 30px; 
+            position: relative; 
+            z-index: 1;
+            opacity: 0.7;
+        }
 
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 2000; justify-content: center; align-items: center; padding: 16px; }
         .modal-content { padding: 24px; border-radius: 28px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
@@ -223,33 +259,18 @@
         </div>
     </div>
 
-    <!-- ✅ MODAL SIMPAN - VERSI MINIMALIS (TANPA ICON) -->
+    <!-- Modal Simpan -->
     <div class="modal" id="saveModal">
         <div class="modal-content glass-panel glossy-highlight">
-            <!-- ✅ Tanpa icon disket -->
             <h3>Simpan Aktivitas</h3>
             
             <div class="activity-summary">
-                <div class="summary-row">
-                    <!-- ✅ Tanpa icon jam -->
-                    <span>Waktu</span>
-                    <span id="summaryTime">00:00:00</span>
-                </div>
-                <div class="summary-row">
-                    <!-- ✅ Tanpa icon penggaris -->
-                    <span>Jarak</span>
-                    <span id="summaryDist">0.00 km</span>
-                </div>
-                <div class="summary-row">
-                    <span>Pace</span>
-                    <span id="summaryPace">0:00</span>
-                </div>
+                <div class="summary-row"><span>Waktu</span><span id="summaryTime">00:00:00</span></div>
+                <div class="summary-row"><span>Jarak</span><span id="summaryDist">0.00 km</span></div>
+                <div class="summary-row"><span>Pace</span><span id="summaryPace">0:00</span></div>
             </div>
 
-            <!-- ✅ Placeholder samar "Tulis Aktivitas...." -->
             <input type="text" id="actName" placeholder="Tulis Aktivitas...." value="">
-            
-            <!-- ✅ Tanpa icon emoji, urutan: Berjalan, Berlari, Bersepeda -->
             <select id="actEquipment">
                 <option value="Berjalan">Berjalan</option>
                 <option value="Berlari" selected>Berlari</option>
@@ -376,84 +397,28 @@
         }
 
         function addTurnMarker(lat, lng, bearing) {
-            const arrowSvg = `
-                <svg class="turn-arrow" viewBox="0 0 24 24" style="transform: rotate(${bearing}deg);">
-                    <defs>
-                        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity="0.3"/>
-                        </filter>
-                    </defs>
-                    <path d="M12 2L4 14h5v8h6v-8h5z" fill="#FF6B00" stroke="white" stroke-width="1.5" filter="url(#shadow)"/>
-                </svg>
-            `;
+            const arrowSvg = `<svg class="turn-arrow" viewBox="0 0 24 24" style="transform: rotate(${bearing}deg);"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity="0.3"/></filter></defs><path d="M12 2L4 14h5v8h6v-8h5z" fill="#FF6B00" stroke="white" stroke-width="1.5" filter="url(#shadow)"/></svg>`;
             const icon = L.divIcon({ className: 'turn-marker', html: arrowSvg, iconSize: [28, 28], iconAnchor: [14, 14] });
             const marker = L.marker([lat, lng], { icon, zIndexOffset: 500 }).addTo(map);
             turnMarkers.push(marker);
         }
 
-        function clearTurnMarkers() {
-            turnMarkers.forEach(marker => map.removeLayer(marker));
-            turnMarkers = [];
-        }
+        function clearTurnMarkers() { turnMarkers.forEach(marker => map.removeLayer(marker)); turnMarkers = []; }
 
         function createCurrentPositionIcon() { return L.divIcon({ className: 'current-position-marker', iconSize: [20, 20], iconAnchor: [10, 10] }); }
-        function createStartIcon() { 
-            return L.divIcon({ 
-                className: 'start-marker', 
-                html: `<svg class="start-flag" viewBox="0 0 32 32"><defs><filter id="startShadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-opacity="0.3"/></filter></defs><path d="M8 4v24M8 4l16 6-16 6" fill="none" stroke="#FF6B00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#startShadow)"/><circle cx="8" cy="4" r="3" fill="#FF6B00" stroke="white" stroke-width="1.5"/></svg>`,
-                iconSize: [32, 32], iconAnchor: [8, 32] 
-            }); 
-        }
-        function updateCurrentMarker(lat, lng) {
-            if (!currentMarker) currentMarker = L.marker([lat, lng], { icon: createCurrentPositionIcon(), zIndexOffset: 1000 }).addTo(map);
-            else currentMarker.setLatLng([lat, lng]);
-        }
-        function addStartMarker(lat, lng) {
-            if (startMarker) map.removeLayer(startMarker);
-            startMarker = L.marker([lat, lng], { icon: createStartIcon(), title: 'Titik Mulai', zIndexOffset: 800 }).addTo(map);
-        }
-        function forceCenterMap() {
-            if (lastPosition) { map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true, duration: 0.8 }); userInteracted = false; }
-        }
+        function createStartIcon() { return L.divIcon({ className: 'start-marker', html: `<svg class="start-flag" viewBox="0 0 32 32"><defs><filter id="startShadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-opacity="0.3"/></filter></defs><path d="M8 4v24M8 4l16 6-16 6" fill="none" stroke="#FF6B00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#startShadow)"/><circle cx="8" cy="4" r="3" fill="#FF6B00" stroke="white" stroke-width="1.5"/></svg>`, iconSize: [32, 32], iconAnchor: [8, 32] }); }
+        function updateCurrentMarker(lat, lng) { if (!currentMarker) currentMarker = L.marker([lat, lng], { icon: createCurrentPositionIcon(), zIndexOffset: 1000 }).addTo(map); else currentMarker.setLatLng([lat, lng]); }
+        function addStartMarker(lat, lng) { if (startMarker) map.removeLayer(startMarker); startMarker = L.marker([lat, lng], { icon: createStartIcon(), title: 'Titik Mulai', zIndexOffset: 800 }).addTo(map); }
+        function forceCenterMap() { if (lastPosition) { map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true, duration: 0.8 }); userInteracted = false; } }
 
         map.on('dragstart zoomstart movestart', () => { clearTimeout(autoCenterTimer); userInteracted = true; });
-        map.on('dragend zoomend moveend', () => {
-            if (userInteracted && lastPosition) {
-                clearTimeout(autoCenterTimer);
-                autoCenterTimer = setTimeout(() => { if (userInteracted) forceCenterMap(); }, AUTO_CENTER_DELAY);
-            }
-        });
+        map.on('dragend zoomend moveend', () => { if (userInteracted && lastPosition) { clearTimeout(autoCenterTimer); autoCenterTimer = setTimeout(() => { if (userInteracted) forceCenterMap(); }, AUTO_CENTER_DELAY); } });
 
-        function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
-            const R = 6371e3, φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-        function checkAutoPause(currentPos) {
-            if (!lastPosition) return false;
-            const dist = getDistanceFromLatLonInM(lastPosition.lat, lastPosition.lng, currentPos.lat, currentPos.lng);
-            const timeDiff = (Date.now() - lastPosition.timestamp) / 1000;
-            if (timeDiff < 1) return true;
-            return (dist / timeDiff * 3.6) < AUTO_PAUSE_SPEED;
-        }
-        function updateTimer() {
-            if (isPaused) return;
-            const elapsed = Date.now() - startTime - elapsedPausedTime;
-            const hrs = Math.floor(elapsed / 3600000), mins = Math.floor((elapsed % 3600000) / 60000), secs = Math.floor((elapsed % 60000) / 1000);
-            document.getElementById('timeDisplay').innerText = `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-            updatePace(elapsed);
-        }
-        function updatePace(elapsedMs) {
-            if (totalDistance < 10) { document.getElementById('paceDisplay').innerText = "0:00"; return; }
-            const paceMsPerKm = elapsedMs / (totalDistance / 1000);
-            const paceMins = Math.floor(paceMsPerKm / 60000), paceSecs = Math.floor((paceMsPerKm % 60000) / 1000);
-            document.getElementById('paceDisplay').innerText = `${paceMins}:${String(paceSecs).padStart(2,'0')}`;
-        }
-        function updateStatus(text, statusClass = '') {
-            document.getElementById('statusText').innerText = text;
-            document.getElementById('statusDot').className = 'status-dot ' + statusClass;
-        }
+        function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) { const R = 6371e3, φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180; const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180; const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2; return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
+        function checkAutoPause(currentPos) { if (!lastPosition) return false; const dist = getDistanceFromLatLonInM(lastPosition.lat, lastPosition.lng, currentPos.lat, currentPos.lng); const timeDiff = (Date.now() - lastPosition.timestamp) / 1000; if (timeDiff < 1) return true; return (dist / timeDiff * 3.6) < AUTO_PAUSE_SPEED; }
+        function updateTimer() { if (isPaused) return; const elapsed = Date.now() - startTime - elapsedPausedTime; const hrs = Math.floor(elapsed / 3600000), mins = Math.floor((elapsed % 3600000) / 60000), secs = Math.floor((elapsed % 60000) / 1000); document.getElementById('timeDisplay').innerText = `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`; updatePace(elapsed); }
+        function updatePace(elapsedMs) { if (totalDistance < 10) { document.getElementById('paceDisplay').innerText = "0:00"; return; } const paceMsPerKm = elapsedMs / (totalDistance / 1000); const paceMins = Math.floor(paceMsPerKm / 60000), paceSecs = Math.floor((paceMsPerKm % 60000) / 1000); document.getElementById('paceDisplay').innerText = `${paceMins}:${String(paceSecs).padStart(2,'0')}`; }
+        function updateStatus(text, statusClass = '') { document.getElementById('statusText').innerText = text; document.getElementById('statusDot').className = 'status-dot ' + statusClass; }
 
         function onGeoSuccess(position) {
             const { latitude: lat, longitude: lng, accuracy } = position.coords;
@@ -570,7 +535,9 @@
 
             document.getElementById('saveModal').style.display = 'none';
             document.getElementById('loading').style.display = 'flex';
-            document.getElementById('loadingText').innerText = '🗺️ Menyesuaikan peta dengan rute...';
+            
+            // ✅ PERUBAHAN: Teks loading tanpa emoji, singkat & elegan
+            document.getElementById('loadingText').innerText = 'Menyiapkan peta...';
 
             try {
                 const savedView = { center: map.getCenter(), zoom: map.getZoom() };
@@ -583,21 +550,23 @@
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
 
-                document.getElementById('loadingText').innerText = '📸 Membuat gambar peta...';
+                // ✅ Tanpa emoji
+                document.getElementById('loadingText').innerText = 'Membuat gambar...';
                 const mapElement = document.getElementById('map');
                 const canvas = await html2canvas(mapElement, { useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scale: 1.5, logging: false });
                 currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.7));
-                console.log('✅ Gambar dibuat, ukuran:', currentMapImage.size, 'bytes');
 
                 map.setView(savedView.center, savedView.zoom, { animate: false });
                 
                 let imageData = null;
                 if (currentMapImage) {
-                    document.getElementById('loadingText').innerText = '📤 Mengupload gambar...';
+                    // ✅ Tanpa emoji
+                    document.getElementById('loadingText').innerText = 'Mengupload...';
                     imageData = await blobToBase64(currentMapImage);
                 }
 
-                document.getElementById('loadingText').innerText = '💾 Menyimpan data...';
+                // ✅ Tanpa emoji
+                document.getElementById('loadingText').innerText = 'Menyimpan...';
                 const payload = { userId, name: activityData.name, equipment: activityData.equipment, distance: parseFloat(activityData.dist), duration: activityData.time, pace: activityData.pace, route: activityData.route, imageData };
                 const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const responseText = await response.text();
@@ -655,7 +624,7 @@
             if (!savedActivityData) return;
             const shareData = {
                 title: savedActivityData.name,
-                text: `${savedActivityData.name}\n ${savedActivityData.dist} km\n ${savedActivityData.time}\n⚡ Pace: ${savedActivityData.pace}\n\n#VeloRun`
+                text: `${savedActivityData.name}\n ${savedActivityData.dist} km\n ${savedActivityData.time}\n Pace: ${savedActivityData.pace}\n\n#VeloRun`
             };
             if (currentMapImage && navigator.canShare) {
                 const file = new File([currentMapImage], 'velorun.jpg', { type: 'image/jpeg' });
@@ -716,8 +685,8 @@
                         <div class="activity-item">
                             <div class="activity-info">
                                 <h4>${act.name}</h4>
-                                <p>📏 ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
-                                <p>👟 ${act.equipment} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                <p> ${act.distance} km |  ${act.duration} |  ${act.pace}</p>
+                                <p> ${act.equipment} |  ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                             </div>
                         </div>
                     `).join('');
