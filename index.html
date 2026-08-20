@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#fc4c02">
-    <meta name="description" content="VeloRun - Aplikasi Tracking Olahraga Gratis">
+    <meta name="theme-color" content="#00d4ff">
+    <meta name="description" content="VeloRun - Aplikasi Tracking Olahraga Premium">
     <title>VeloRun</title>
     
     <!-- PWA Manifest -->
@@ -18,16 +18,36 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
-        #map { width: 100%; height: 100%; z-index: 1; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        
+        #map { 
+            width: 100%; 
+            height: 100%; 
+            z-index: 1; 
+        }
         
         /* Custom Marker Styles */
         .current-position-marker {
-            background: #1a73e8;
-            border: 3px solid white;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #00d4ff);
+            border: 3px solid rgba(255, 255, 255, 0.9);
             border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            box-shadow: 
+                0 0 20px rgba(0, 212, 255, 0.6),
+                0 0 40px rgba(0, 212, 255, 0.3),
+                inset 0 -3px 6px rgba(0, 0, 0, 0.1);
             animation: pulse 2s infinite;
         }
         .current-position-marker::after {
@@ -37,118 +57,531 @@
             transform: translate(-50%, -50%);
             width: 100%; height: 100%;
             border-radius: 50%;
-            background: #1a73e8;
-            opacity: 0.4;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.4), transparent);
             animation: ripple 2s infinite;
         }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-        @keyframes ripple { 0% { width: 100%; height: 100%; opacity: 0.4; } 100% { width: 250%; height: 250%; opacity: 0; } }
+        @keyframes pulse { 
+            0%, 100% { transform: scale(1); } 
+            50% { transform: scale(1.15); } 
+        }
+        @keyframes ripple { 
+            0% { width: 100%; height: 100%; opacity: 0.6; } 
+            100% { width: 300%; height: 300%; opacity: 0; } 
+        }
         
         .start-marker {
-            background: #28a745;
-            border: 3px solid white;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #00ff88);
+            border: 3px solid rgba(255, 255, 255, 0.9);
             border-radius: 50% 50% 50% 0;
             transform: rotate(-45deg);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            box-shadow: 
+                0 4px 12px rgba(0, 255, 136, 0.5),
+                inset 0 -3px 6px rgba(0, 0, 0, 0.1);
         }
         
-        /* Control Panel */
+        /* Control Panel - Glassmorphism Effect */
         .overlay {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 24px 24px 0 0;
-            padding: 20px;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            position: absolute; 
+            bottom: 0; 
+            left: 0; 
+            right: 0;
+            background: linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.15) 0%,
+                rgba(255, 255, 255, 0.08) 100%
+            );
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 32px 32px 0 0;
+            padding: 24px 20px;
+            box-shadow: 
+                0 -8px 32px rgba(0, 0, 0, 0.12),
+                0 2px 8px rgba(255, 255, 255, 0.3) inset;
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
             z-index: 1000;
         }
-        .stats { display: flex; justify-content: space-around; margin-bottom: 16px; }
-        .stat-item { text-align: center; flex: 1; }
-        .stat-value { font-size: 24px; font-weight: 800; color: #fc4c02; letter-spacing: -0.5px; }
-        .stat-label { font-size: 10px; color: #666; text-transform: uppercase; font-weight: 600; margin-top: 2px; }
         
-        .btn-group { display: flex; gap: 10px; justify-content: center; }
+        /* Glossy highlight effect */
+        .overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.4) 0%,
+                rgba(255, 255, 255, 0.1) 100%
+            );
+            border-radius: 32px 32px 0 0;
+            pointer-events: none;
+        }
+        
+        .stats { 
+            display: flex; 
+            justify-content: space-around; 
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-item { 
+            text-align: center; 
+            flex: 1;
+            padding: 12px 8px;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.25) 0%,
+                rgba(255, 255, 255, 0.1) 100%
+            );
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin: 0 6px;
+            box-shadow: 
+                0 4px 16px rgba(0, 0, 0, 0.08),
+                0 2px 4px rgba(255, 255, 255, 0.4) inset;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .stat-value { 
+            font-size: 26px; 
+            font-weight: 800; 
+            background: linear-gradient(135deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0, 212, 255, 0.2);
+        }
+        
+        .stat-label { 
+            font-size: 10px; 
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase; 
+            font-weight: 600; 
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-group { 
+            display: flex; 
+            gap: 12px; 
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+        
         .btn {
-            flex: 1; padding: 14px; border: none; border-radius: 14px;
-            font-size: 15px; font-weight: 700; color: white; cursor: pointer;
-            transition: transform 0.1s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            flex: 1; 
+            padding: 16px; 
+            border: none; 
+            border-radius: 18px;
+            font-size: 15px; 
+            font-weight: 700; 
+            color: white; 
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.15),
+                0 2px 4px rgba(255, 255, 255, 0.3) inset;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
-        .btn:active { transform: scale(0.96); }
-        .btn-start { background: linear-gradient(135deg, #28a745, #20c997); }
-        .btn-stop { background: linear-gradient(135deg, #dc3545, #ff6b6b); }
-        .btn-share { background: linear-gradient(135deg, #007bff, #0056b3); }
+        
+        /* Glossy button effect */
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.4) 0%,
+                rgba(255, 255, 255, 0.1) 100%
+            );
+            border-radius: 18px 18px 0 0;
+            pointer-events: none;
+        }
+        
+        .btn:active { 
+            transform: scale(0.95);
+            box-shadow: 
+                0 3px 10px rgba(0, 0, 0, 0.2),
+                0 1px 2px rgba(255, 255, 255, 0.3) inset;
+        }
+        
+        .btn-start { 
+            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+        }
+        
+        .btn-stop { 
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff0080 100%);
+        }
+        
+        .btn-share { 
+            background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+        }
+        
         .btn-icon { 
-            flex: 0.4; padding: 14px 8px; background: linear-gradient(135deg, #6c757d, #495057);
+            flex: 0.4; 
+            padding: 16px 8px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.15));
+            backdrop-filter: blur(10px);
             font-size: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        /* Status Bar */
+        .btn:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+        }
+        
+        /* Status Bar - Glass Effect */
         .status-bar {
-            position: absolute; top: 16px; left: 16px; right: 16px;
-            background: rgba(255,255,255,0.95); padding: 10px 16px;
-            border-radius: 12px; z-index: 999;
-            display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: absolute; 
+            top: 16px; 
+            left: 16px; 
+            right: 16px;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.2) 0%,
+                rgba(255, 255, 255, 0.1) 100%
+            );
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            padding: 12px 18px;
+            border-radius: 20px;
+            z-index: 999;
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+            box-shadow: 
+                0 4px 16px rgba(0, 0, 0, 0.1),
+                0 2px 4px rgba(255, 255, 255, 0.3) inset;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        .status-indicator { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #333; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ffc107; }
-        .status-dot.ready { background: #28a745; animation: blink 1.5s infinite; }
-        .status-dot.tracking { background: #1a73e8; animation: blink 1s infinite; }
-        .status-dot.paused { background: #ffc107; animation: none; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .accuracy-info { font-size: 11px; color: #666; }
         
-        /* GPS Loading Overlay */
+        /* Glossy highlight */
+        .status-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.4) 0%,
+                rgba(255, 255, 255, 0.1) 100%
+            );
+            border-radius: 20px 20px 0 0;
+            pointer-events: none;
+        }
+        
+        .status-indicator { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            font-size: 14px; 
+            font-weight: 600; 
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .status-dot { 
+            width: 12px; 
+            height: 12px; 
+            border-radius: 50%; 
+            background: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        .status-dot.ready { 
+            background: #00ff88;
+            box-shadow: 0 0 15px #00ff88;
+            animation: blink 1.5s infinite; 
+        }
+        
+        .status-dot.tracking { 
+            background: #00d4ff;
+            box-shadow: 0 0 15px #00d4ff;
+            animation: blink 1s infinite; 
+        }
+        
+        .status-dot.paused { 
+            background: #ffcc00;
+            box-shadow: 0 0 15px #ffcc00;
+            animation: none; 
+        }
+        
+        @keyframes blink { 
+            0%, 100% { opacity: 1; } 
+            50% { opacity: 0.4; } 
+        }
+        
+        .accuracy-info { 
+            font-size: 12px; 
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* GPS Loading Overlay - Glass Effect */
         .gps-loading {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.95); z-index: 3000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(102, 126, 234, 0.95) 0%,
+                rgba(118, 75, 162, 0.95) 100%
+            );
+            backdrop-filter: blur(20px);
+            z-index: 3000;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
         }
+        
         .gps-loading.hidden { display: none; }
+        
         .gps-loading .spinner {
-            border: 4px solid #f3f3f3; border-top: 4px solid #fc4c02; border-radius: 50%;
-            width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 20px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #00d4ff;
+            border-right: 4px solid #00ff88;
+            border-radius: 50%;
+            width: 70px; 
+            height: 70px; 
+            animation: spin 1s linear infinite; 
+            margin-bottom: 24px;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
         }
-        .gps-loading-text { color: #333; font-size: 16px; font-weight: 600; }
-        .gps-loading-sub { color: #666; font-size: 13px; margin-top: 8px; text-align: center; padding: 0 20px;}
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Modal */
+        .gps-loading-text { 
+            color: white; 
+            font-size: 18px; 
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 8px;
+        }
+        
+        .gps-loading-sub { 
+            color: rgba(255, 255, 255, 0.8); 
+            font-size: 14px; 
+            text-align: center; 
+            padding: 0 30px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        
+        /* Modal - Glass Effect */
         .modal {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(4px);
-            justify-content: center; align-items: center; padding: 20px;
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 2000;
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px;
         }
-        .modal-content {
-            background: white; padding: 24px; border-radius: 20px; width: 100%; max-width: 400px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: slideUp 0.3s ease;
-        }
-        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-content h3 { margin: 0 0 20px 0; color: #333; font-size: 20px; }
-        .modal-content input, .modal-content select {
-            width: 100%; padding: 14px; margin: 10px 0; border: 2px solid #e9ecef; 
-            border-radius: 12px; font-size: 16px; outline: none;
-        }
-        .modal-content input:focus, .modal-content select:focus { border-color: #fc4c02; }
         
-        .activity-list { max-height: 60vh; overflow-y: auto; }
-        .activity-item {
-            background: #f8f9fa; padding: 16px; margin: 10px 0; border-radius: 12px;
-            border-left: 4px solid #fc4c02;
+        .modal-content {
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.25) 0%,
+                rgba(255, 255, 255, 0.1) 100%
+            );
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            padding: 28px; 
+            border-radius: 24px; 
+            width: 100%; 
+            max-width: 400px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 4px 8px rgba(255, 255, 255, 0.3) inset;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
         }
-        .activity-info h4 { margin: 0 0 8px 0; color: #212529; font-size: 16px; }
-        .activity-info p { margin: 4px 0; font-size: 14px; color: #6c757d; }
+        
+        /* Glossy highlight on modal */
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.4) 0%,
+                rgba(255, 255, 255, 0.1) 100%
+            );
+            border-radius: 24px 24px 0 0;
+            pointer-events: none;
+        }
+        
+        @keyframes slideUp { 
+            from { transform: translateY(60px); opacity: 0; } 
+            to { transform: translateY(0); opacity: 1; } 
+        }
+        
+        .modal-content h3 { 
+            margin: 0 0 24px 0; 
+            color: white; 
+            font-size: 22px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .modal-content input, .modal-content select {
+            width: 100%; 
+            padding: 16px; 
+            margin: 12px 0; 
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px; 
+            font-size: 16px; 
+            color: white;
+            outline: none;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .modal-content input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .modal-content input:focus, .modal-content select:focus { 
+            background: rgba(255, 255, 255, 0.3);
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        
+        .modal-content select option {
+            background: #667eea;
+            color: white;
+        }
+        
+        .activity-list { 
+            max-height: 60vh; 
+            overflow-y: auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .activity-item {
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.2) 0%,
+                rgba(255, 255, 255, 0.1) 100%
+            );
+            backdrop-filter: blur(10px);
+            padding: 18px; 
+            margin: 12px 0; 
+            border-radius: 16px;
+            border-left: 4px solid #00d4ff;
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                0 2px 4px rgba(255, 255, 255, 0.2) inset;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .activity-info h4 { 
+            margin: 0 0 10px 0; 
+            color: white; 
+            font-size: 17px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        .activity-info p { 
+            margin: 5px 0; 
+            font-size: 14px; 
+            color: rgba(255, 255, 255, 0.85);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
         
         #loading { 
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.95); z-index: 3000;
-            justify-content: center; align-items: center; flex-direction: column;
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(102, 126, 234, 0.95) 0%,
+                rgba(118, 75, 162, 0.95) 100%
+            );
+            backdrop-filter: blur(20px);
+            z-index: 3000;
+            justify-content: center; 
+            align-items: center; 
+            flex-direction: column;
         }
+        
         .spinner {
-            border: 4px solid #f3f3f3; border-top: 4px solid #fc4c02; border-radius: 50%;
-            width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 16px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #00d4ff;
+            border-right: 4px solid #00ff88;
+            border-radius: 50%;
+            width: 60px; 
+            height: 60px; 
+            animation: spin 1s linear infinite; 
+            margin-bottom: 20px;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
         }
-        .loading-text { color: #666; font-weight: 600; }
+        
+        .loading-text { 
+            color: white; 
+            font-weight: 600;
+            font-size: 16px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.5);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.7);
+        }
     </style>
 </head>
 <body>
@@ -209,8 +642,8 @@
                 <option value="Sepeda"> Sepeda</option>
                 <option value="Jalan Kaki">🚶 Jalan Kaki</option>
             </select>
-            <div class="btn-group" style="margin-top: 20px;">
-                <button class="btn btn-stop" onclick="closeModal()" style="background: #6c757d;">Batal</button>
+            <div class="btn-group" style="margin-top: 24px;">
+                <button class="btn btn-stop" onclick="closeModal()" style="background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15)); border: 1px solid rgba(255,255,255,0.3);">Batal</button>
                 <button class="btn btn-start" onclick="saveActivity()">Simpan</button>
             </div>
         </div>
@@ -221,7 +654,7 @@
         <div class="modal-content">
             <h3>📊 Riwayat Aktivitas</h3>
             <div id="activityList" class="activity-list">Memuat data...</div>
-            <button class="btn btn-stop" onclick="closeHistory()" style="margin-top: 20px; width: 100%; background: #6c757d;">Tutup</button>
+            <button class="btn btn-stop" onclick="closeHistory()" style="margin-top: 24px; width: 100%; background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15)); border: 1px solid rgba(255,255,255,0.3);">Tutup</button>
         </div>
     </div>
 
@@ -236,7 +669,7 @@
         const MIN_ACCURACY = 30;
         const MAX_JUMP = 50;
         const AUTO_PAUSE_SPEED = 1.5;
-        const AUTO_CENTER_DELAY = 5000; // 5 detik sebelum kembali auto-follow
+        const AUTO_CENTER_DELAY = 5000;
 
         // ==========================================
         // USER ID
@@ -274,8 +707,8 @@
         let watchId = null;
         let isTracking = false;
         let isPaused = false;
-        let userInteracted = false; // True saat user geser peta manual
-        let autoCenterTimer = null; // Timer untuk auto-center
+        let userInteracted = false;
+        let autoCenterTimer = null;
         let startTime = 0;
         let elapsedPausedTime = 0;
         let timerInterval = null;
@@ -324,7 +757,6 @@
             startMarker.bindPopup('<b>🚩 Titik Mulai</b>').openPopup();
         }
 
-        // Paksa peta kembali ke posisi user
         function forceCenterMap() {
             if (lastPosition) {
                 map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { 
@@ -336,22 +768,17 @@
         }
 
         // ==========================================
-        // LOGIKA AUTO-FOLLOW + AUTO-CENTER 5 DETIK
+        // LOGIKA AUTO-FOLLOW + AUTO-CENTER
         // ==========================================
-        
-        // Saat user mulai menggeser/zoom peta
         map.on('dragstart zoomstart movestart', () => {
             clearTimeout(autoCenterTimer);
             userInteracted = true;
         });
 
-        // Saat user selesai menggeser/zoom peta
         map.on('dragend zoomend moveend', () => {
             if (userInteracted && lastPosition) {
                 clearTimeout(autoCenterTimer);
-                // Mulai hitung mundur 5 detik
                 autoCenterTimer = setTimeout(() => {
-                    // Cek lagi apakah user tidak berinteraksi
                     if (userInteracted) {
                         forceCenterMap();
                     }
@@ -419,7 +846,6 @@
             const currentPos = { lat, lng, timestamp: Date.now() };
             updateCurrentMarker(lat, lng);
 
-            // GPS pertama kali ditemukan
             if (!gpsFirstLock) {
                 gpsFirstLock = true;
                 
@@ -433,7 +859,6 @@
                 return;
             }
 
-            // Update posisi terakhir
             lastPosition = currentPos;
 
             if (isTracking) {
@@ -446,7 +871,6 @@
                     updateStatus('▶ Berlari...', 'tracking');
                 }
 
-                // Tambahkan titik ke rute
                 if (routeCoords.length > 0 && !isPaused) {
                     const prevPos = routeCoords[routeCoords.length - 1];
                     const dist = getDistanceFromLatLonInM(prevPos[0], prevPos[1], lat, lng);
@@ -457,7 +881,7 @@
                         
                         if (!polyline) {
                             polyline = L.polyline(routeCoords, {
-                                color: '#fc4c02', weight: 5, opacity: 0.9,
+                                color: '#00d4ff', weight: 6, opacity: 0.9,
                                 lineCap: 'round', lineJoin: 'round'
                             }).addTo(map);
                         } else {
@@ -467,14 +891,13 @@
                 } else if (routeCoords.length === 0 && !isPaused) {
                     routeCoords.push([lat, lng]);
                     polyline = L.polyline(routeCoords, {
-                        color: '#fc4c02', weight: 5, opacity: 0.9,
+                        color: '#00d4ff', weight: 6, opacity: 0.9,
                         lineCap: 'round', lineJoin: 'round'
                     }).addTo(map);
                 }
 
                 document.getElementById('distDisplay').innerText = (totalDistance / 1000).toFixed(2);
 
-                // Auto-follow: Peta mengikuti user jika tidak ada interaksi manual
                 if (!userInteracted) {
                     map.panTo([lat, lng], { animate: true, duration: 0.5 });
                 }
@@ -498,7 +921,7 @@
         function startTracking() {
             isTracking = true;
             isPaused = false;
-            userInteracted = false; // Reset agar auto-follow aktif
+            userInteracted = false;
             startTime = Date.now();
             elapsedPausedTime = 0;
             totalDistance = 0;
@@ -514,10 +937,9 @@
             document.getElementById('btnStop').style.display = 'block';
             document.getElementById('btnShare').style.display = 'none';
             
-            // Tambahkan marker start
             if (lastPosition) {
                 addStartMarker(lastPosition.lat, lastPosition.lng);
-                forceCenterMap(); // Center peta saat mulai tracking
+                forceCenterMap();
             }
         }
 
@@ -587,7 +1009,7 @@
                         if (navigator.canShare({ files: [file] })) {
                             await navigator.share({
                                 title: name,
-                                text: ` ${name}\n📏 ${activity.dist} km | ⏱ ${activity.time}\n Pace: ${activity.pace}\n👟 ${equipment}\n\n#VeloRun`,
+                                text: `🏃 ${name}\n📏 ${activity.dist} km | ⏱ ${activity.time}\n⚡ Pace: ${activity.pace}\n👟 ${equipment}\n\n#VeloRun`,
                                 files: [file]
                             });
                         }
@@ -631,7 +1053,7 @@
         async function showHistory() {
             document.getElementById('historyModal').style.display = 'flex';
             const list = document.getElementById('activityList');
-            list.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Memuat data...</div>';
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.7);">Memuat data...</div>';
             
             try {
                 const userId = getUserId();
@@ -645,15 +1067,15 @@
                             <div class="activity-info">
                                 <h4>${act.name}</h4>
                                 <p>📏 ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
-                                <p>👟 ${act.equipment} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                <p> ${act.equipment} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                             </div>
                         </div>
                     `).join('');
                 } else {
-                    list.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Belum ada aktivitas.</div>';
+                    list.innerHTML = '<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.6);">Belum ada aktivitas.</div>';
                 }
             } catch (error) {
-                list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data.</div>';
+                list.innerHTML = '<div style="text-align:center; padding:20px; color:rgba(255,100,100,0.9);">Gagal memuat data.</div>';
             }
         }
 
