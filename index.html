@@ -109,7 +109,6 @@
         .gps-loading.hidden { display: none; }
         #loading { display: none; }
         
-        /* ✅ Spinner lebih kecil & elegan */
         .spinner { 
             width: 48px; height: 48px; border-radius: 50%; 
             border: 3px solid rgba(255, 107, 0, 0.1); 
@@ -119,18 +118,16 @@
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
         
-        /* ✅ PERUBAHAN UTAMA: Loading text tipis & kecil */
         .loading-text, .gps-loading-text { 
             color: var(--text-black); 
             font-size: 14px; 
-            font-weight: 400; /* Tipis, tidak bold */
+            font-weight: 400;
             letter-spacing: 0.2px;
             margin-bottom: 4px; 
             position: relative; 
             z-index: 1;
         }
         
-        /* ✅ Sub text lebih kecil & samar */
         .gps-loading-sub { 
             color: var(--text-grey); 
             font-size: 12px; 
@@ -181,9 +178,84 @@
         }
 
         .activity-list { max-height: 50vh; overflow-y: auto; position: relative; z-index: 1; padding-right: 4px; }
-        .activity-item { background: rgba(255,255,255,0.6); padding: 14px; margin: 8px 0; border-radius: 16px; border-left: 4px solid var(--primary-orange); box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1); }
+        
+        /* ✅ PERUBAHAN: Activity item bisa diklik */
+        .activity-item { 
+            background: rgba(255,255,255,0.6); 
+            padding: 14px; 
+            margin: 8px 0; 
+            border-radius: 16px; 
+            border-left: 4px solid var(--primary-orange); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .activity-item:hover {
+            background: rgba(255,255,255,0.8);
+            transform: translateX(4px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+        }
+        .activity-item:active {
+            transform: scale(0.98);
+        }
+        
         .activity-info h4 { margin: 0 0 6px 0; color: var(--text-black); font-size: 15px; font-weight: 800; }
         .activity-info p { margin: 3px 0; font-size: 12px; color: var(--text-grey); font-weight: 600; }
+        
+        /* Detail aktivitas styling */
+        .detail-image-container {
+            width: 100%;
+            height: 220px;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 2px solid rgba(255, 107, 0, 0.3);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            position: relative;
+            z-index: 1;
+            background: #f1f5f9;
+        }
+        
+        .detail-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center center;
+            display: block;
+        }
+        
+        .detail-label {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 107, 0, 0.95);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .detail-info {
+            background: rgba(255, 107, 0, 0.05);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 107, 0, 0.1);
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-row span:first-child { color: var(--text-grey); font-weight: 600; font-size: 13px; }
+        .detail-row span:last-child { color: var(--text-black); font-weight: 700; font-size: 14px; }
         
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -319,6 +391,50 @@
             <button class="btn btn-dark" onclick="startNewActivity()" style="width: 100%;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clip-rule="evenodd" /></svg>
                 Mulai Aktivitas Baru
+            </button>
+        </div>
+    </div>
+
+    <!-- ✅ MODAL DETAIL AKTIVITAS (BARU) -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content glass-panel glossy-highlight">
+            <h3>Detail Aktivitas</h3>
+            
+            <div class="detail-image-container">
+                <div class="detail-label">Peta Rute</div>
+                <img id="detailImage" class="detail-image" src="" alt="Peta rute">
+            </div>
+            
+            <div class="detail-info">
+                <div class="detail-row">
+                    <span>Aktivitas</span>
+                    <span id="detailName">-</span>
+                </div>
+                <div class="detail-row">
+                    <span>Tipe</span>
+                    <span id="detailEquipment">-</span>
+                </div>
+                <div class="detail-row">
+                    <span>Jarak</span>
+                    <span id="detailDistance">-</span>
+                </div>
+                <div class="detail-row">
+                    <span>Waktu</span>
+                    <span id="detailDuration">-</span>
+                </div>
+                <div class="detail-row">
+                    <span>Pace</span>
+                    <span id="detailPace">-</span>
+                </div>
+                <div class="detail-row">
+                    <span>Tanggal</span>
+                    <span id="detailDate">-</span>
+                </div>
+            </div>
+            
+            <button class="btn btn-dark" onclick="closeDetail()" style="width: 100%;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                Tutup
             </button>
         </div>
     </div>
@@ -535,8 +651,6 @@
 
             document.getElementById('saveModal').style.display = 'none';
             document.getElementById('loading').style.display = 'flex';
-            
-            // ✅ PERUBAHAN: Teks loading tanpa emoji, singkat & elegan
             document.getElementById('loadingText').innerText = 'Menyiapkan peta...';
 
             try {
@@ -550,7 +664,6 @@
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
 
-                // ✅ Tanpa emoji
                 document.getElementById('loadingText').innerText = 'Membuat gambar...';
                 const mapElement = document.getElementById('map');
                 const canvas = await html2canvas(mapElement, { useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scale: 1.5, logging: false });
@@ -560,12 +673,10 @@
                 
                 let imageData = null;
                 if (currentMapImage) {
-                    // ✅ Tanpa emoji
                     document.getElementById('loadingText').innerText = 'Mengupload...';
                     imageData = await blobToBase64(currentMapImage);
                 }
 
-                // ✅ Tanpa emoji
                 document.getElementById('loadingText').innerText = 'Menyimpan...';
                 const payload = { userId, name: activityData.name, equipment: activityData.equipment, distance: parseFloat(activityData.dist), duration: activityData.time, pace: activityData.pace, route: activityData.route, imageData };
                 const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
@@ -670,6 +781,36 @@
         }
 
         function closeHistory() { document.getElementById('historyModal').style.display = 'none'; }
+        function closeDetail() { document.getElementById('detailModal').style.display = 'none'; }
+
+        // ✅ FUNGSI BARU: Tampilkan detail aktivitas
+        function showActivityDetail(activity) {
+            // Isi data detail
+            document.getElementById('detailName').innerText = activity.name;
+            document.getElementById('detailEquipment').innerText = activity.equipment;
+            document.getElementById('detailDistance').innerText = activity.distance + ' km';
+            document.getElementById('detailDuration').innerText = activity.duration;
+            document.getElementById('detailPace').innerText = activity.pace;
+            
+            // Format tanggal
+            const date = new Date(activity.timestamp);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('detailDate').innerText = date.toLocaleDateString('id-ID', options);
+            
+            // Tampilkan gambar jika ada
+            const imgEl = document.getElementById('detailImage');
+            if (activity.imageUrl) {
+                imgEl.src = activity.imageUrl;
+                imgEl.style.display = 'block';
+            } else {
+                // Fallback: placeholder
+                imgEl.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f1f5f9" width="400" height="300"/%3E%3Ctext fill="%2394a3b8" font-family="sans-serif" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3EGambar tidak tersedia%3C/text%3E%3C/svg%3E';
+                imgEl.style.display = 'block';
+            }
+            
+            // Tampilkan modal
+            document.getElementById('detailModal').style.display = 'flex';
+        }
 
         async function showHistory() {
             document.getElementById('historyModal').style.display = 'flex';
@@ -681,8 +822,9 @@
                 const responseText = await response.text();
                 const result = JSON.parse(responseText);
                 if (result.success && result.activities.length > 0) {
-                    list.innerHTML = result.activities.map(act => `
-                        <div class="activity-item">
+                    // ✅ Klik untuk lihat detail
+                    list.innerHTML = result.activities.map((act, index) => `
+                        <div class="activity-item" onclick="showActivityDetail(result.activities[${index}])">
                             <div class="activity-info">
                                 <h4>${act.name}</h4>
                                 <p> ${act.distance} km |  ${act.duration} |  ${act.pace}</p>
