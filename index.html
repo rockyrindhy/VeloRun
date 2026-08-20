@@ -3,14 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SportTracker Web</title>
+    <meta name="theme-color" content="#fc4c02">
+    <meta name="description" content="SportTracker - Aplikasi tracking olahraga">
+    <title>SportTracker Pro</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- html2canvas untuk generate gambar peta -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         #map { width: 100%; height: 100%; z-index: 1; }
         
-        /* UI Overlay */
         .overlay {
             position: absolute; bottom: 0; left: 0; right: 0;
             background: rgba(255, 255, 255, 0.95);
@@ -19,40 +29,56 @@
             box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
             z-index: 1000;
             text-align: center;
-            transition: transform 0.3s ease;
         }
         .stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
         .stat-item { text-align: center; }
-        .stat-value { font-size: 24px; font-weight: bold; color: #fc4c02; /* Strava Orange */ }
+        .stat-value { font-size: 24px; font-weight: bold; color: #fc4c02; }
         .stat-label { font-size: 12px; color: #666; text-transform: uppercase; }
         
         .btn {
             padding: 15px 30px; border: none; border-radius: 30px;
             font-size: 16px; font-weight: bold; color: white; cursor: pointer;
-            margin: 0 10px; transition: opacity 0.2s;
+            margin: 5px; transition: opacity 0.2s;
         }
         .btn-start { background: #28a745; }
         .btn-stop { background: #dc3545; }
-        .btn-share { background: #007bff; display: none; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* Modal Save */
+        .btn-share { background: #007bff; }
+        .btn-history { background: #6c757d; }
+        
         .modal {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5); z-index: 2000;
             justify-content: center; align-items: center;
         }
         .modal-content {
-            background: white; padding: 20px; border-radius: 15px; width: 80%; max-width: 400px;
+            background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px;
+            max-height: 90vh; overflow-y: auto;
         }
         .modal-content input, .modal-content select {
             width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
         }
+        
+        .activity-list { margin-top: 20px; }
+        .activity-item {
+            background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .activity-info h4 { margin: 0 0 5px 0; color: #333; }
+        .activity-info p { margin: 2px 0; font-size: 14px; color: #666; }
+        
+        #loading { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; }
+        .spinner {
+            border: 4px solid #f3f3f3; border-top: 4px solid #fc4c02; border-radius: 50%;
+            width: 50px; height: 50px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div id="map"></div>
+    
+    <div id="loading"><div class="spinner"></div></div>
 
     <div class="overlay" id="controlPanel">
         <div class="stats">
@@ -69,12 +95,15 @@
                 <div class="stat-label">Pace (min/km)</div>
             </div>
         </div>
-        <button class="btn btn-start" id="btnStart" onclick="startTracking()">Mulai Olahraga</button>
-        <button class="btn btn-stop" id="btnStop" onclick="stopTracking()" style="display:none;">Selesai</button>
-        <button class="btn btn-share" id="btnShare" onclick="shareActivity()">Share</button>
+        <div>
+            <button class="btn btn-start" id="btnStart" onclick="startTracking()">Mulai Olahraga</button>
+            <button class="btn btn-stop" id="btnStop" onclick="stopTracking()" style="display:none;">Selesai</button>
+            <button class="btn btn-share" id="btnShare" onclick="prepareShare()" style="display:none;">Generate & Share</button>
+            <button class="btn btn-history" onclick="showHistory()">Riwayat</button>
+        </div>
     </div>
 
-    <!-- Modal untuk Custom Nama & Peralatan -->
+    <!-- Modal Save -->
     <div class="modal" id="saveModal">
         <div class="modal-content">
             <h3>Simpan Aktivitas</h3>
@@ -84,77 +113,73 @@
                 <option value="Sepeda">Sepeda</option>
                 <option value="Tanpa Alat">Tanpa Alat (Jalan Kaki)</option>
             </select>
-            <button class="btn btn-start" onclick="saveAndShare()">Simpan & Bagikan</button>
+            <button class="btn btn-start" onclick="saveActivity()">Simpan</button>
             <button class="btn btn-stop" onclick="closeModal()">Batal</button>
         </div>
     </div>
 
-    <!-- Leaflet JS -->
+    <!-- Modal History -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <h3>Riwayat Aktivitas</h3>
+            <div id="activityList" class="activity-list">Loading...</div>
+            <button class="btn btn-stop" onclick="closeHistory()" style="margin-top: 20px;">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // --- INISIALISASI PETA ---
-        const map = L.map('map').setView([-6.2088, 106.8456], 13); // Default Jakarta
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        let polyline = null;
-        let watchId = null;
-        let isTracking = false;
-        let isPaused = false;
+    
+    <script type="module">
+        import { saveActivityToFirebase, getUserActivities } from './firebase-config.js';
         
-        // Variables untuk Tracking
-        let startTime = 0;
-        let elapsedPausedTime = 0;
-        let timerInterval = null;
-        let totalDistance = 0; // dalam meter
-        let lastPosition = null;
-        let routeCoords = [];
+        // Export ke global scope agar bisa dipanggil dari HTML
+        window.saveActivityToFirebase = saveActivityToFirebase;
+        window.getUserActivities = getUserActivities;
+    </script>
 
-        // --- FUNGSI HAVERSINE (HITUNG JARAK 2 TITIK GPS) ---
-        function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // Radius bumi dalam meter
-            const φ1 = lat1 * Math.PI/180;
-            const φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180;
-            const Δλ = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                      Math.cos(φ1) * Math.cos(φ2) *
-                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
+    <script>
+        // --- PWA REGISTRATION ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.error('SW registration failed:', err));
         }
 
-        // --- LOGIKA AUTO-PAUSE ---
+        // --- MAP & TRACKING VARIABLES ---
+        const map = L.map('map').setView([-6.2088, 106.8456], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        let polyline = null, watchId = null, isTracking = false, isPaused = false;
+        let startTime = 0, elapsedPausedTime = 0, timerInterval = null;
+        let totalDistance = 0, lastPosition = null, routeCoords = [];
+        let currentMapImage = null;
+
+        // --- HELPER FUNCTIONS ---
+        function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
         function checkAutoPause(currentPos) {
             if (!lastPosition) return false;
-            
             const dist = getDistanceFromLatLonInM(lastPosition.lat, lastPosition.lng, currentPos.lat, currentPos.lng);
-            const timeDiff = (Date.now() - lastPosition.timestamp) / 1000; // detik
-            
-            // Jika waktu terlalu singkat (GPS jitter), abaikan
-            if (timeDiff < 1) return true; 
-            
-            const speedMs = dist / timeDiff; // meter per detik
-            const speedKmh = speedMs * 3.6;
-
-            // Threshold: Jika kecepatan < 1.5 km/jam, anggap berhenti (Auto Pause)
-            return speedKmh < 1.5; 
+            const timeDiff = (Date.now() - lastPosition.timestamp) / 1000;
+            if (timeDiff < 1) return true;
+            return (dist / timeDiff * 3.6) < 1.5; // < 1.5 km/h
         }
 
-        // --- UPDATE TIMER ---
         function updateTimer() {
             if (isPaused) return;
-            const now = Date.now();
-            const elapsed = now - startTime - elapsedPausedTime;
-            
+            const elapsed = Date.now() - startTime - elapsedPausedTime;
             const hrs = Math.floor(elapsed / 3600000);
             const mins = Math.floor((elapsed % 3600000) / 60000);
             const secs = Math.floor((elapsed % 60000) / 1000);
-            
             document.getElementById('timeDisplay').innerText = 
                 `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-            
             updatePace(elapsed);
         }
 
@@ -163,46 +188,31 @@
                 document.getElementById('paceDisplay').innerText = "0:00";
                 return;
             }
-            const distKm = totalDistance / 1000;
-            const paceMsPerKm = elapsedMs / distKm;
+            const paceMsPerKm = elapsedMs / (totalDistance / 1000);
             const paceMins = Math.floor(paceMsPerKm / 60000);
             const paceSecs = Math.floor((paceMsPerKm % 60000) / 1000);
             document.getElementById('paceDisplay').innerText = `${paceMins}:${String(paceSecs).padStart(2,'0')}`;
         }
 
-        // --- GPS WATCHER ---
         function onGeoSuccess(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            const accuracy = position.coords.accuracy;
-
-            // Filter GPS yang tidak akurat (drift)
-            if (accuracy > 20) return; 
+            const { latitude: lat, longitude: lng, accuracy } = position.coords;
+            if (accuracy > 20) return;
 
             const currentPos = { lat, lng, timestamp: Date.now() };
 
             if (isTracking) {
-                // Logika Auto-Pause
                 const shouldPause = checkAutoPause(currentPos);
-                if (shouldPause && !isPaused) {
-                    isPaused = true;
-                    console.log("Auto-Pause: Berhenti bergerak");
-                } else if (!shouldPause && isPaused) {
-                    isPaused = false;
-                    console.log("Auto-Resume: Bergerak kembali");
-                }
+                if (shouldPause && !isPaused) { isPaused = true; console.log("Auto-Pause"); }
+                else if (!shouldPause && isPaused) { isPaused = false; console.log("Auto-Resume"); }
 
-                // Hitung Jarak
                 if (lastPosition && !isPaused) {
                     const dist = getDistanceFromLatLonInM(lastPosition.lat, lastPosition.lng, lat, lng);
-                    // Filter loncatan GPS (jika > 50 meter dalam 1 detik, itu error GPS)
                     if (dist < 50) {
                         totalDistance += dist;
                         routeCoords.push([lat, lng]);
                         polyline.addLatLng([lat, lng]);
                     }
                 } else if (!lastPosition) {
-                    routeCoords.push([lat, lng]);
                     polyline = L.polyline(routeCoords, {color: '#fc4c02', weight: 5}).addTo(map);
                 }
 
@@ -212,87 +222,134 @@
             }
         }
 
-        function onGeoError(error) {
-            console.error("GPS Error:", error);
-            alert("Gagal mengakses GPS. Pastikan izin lokasi diaktifkan.");
-        }
-
-        // --- KONTROL APLIKASI ---
-        function startTracking() {
-            isTracking = true;
-            isPaused = false;
-            startTime = Date.now();
-            elapsedPausedTime = 0;
-            totalDistance = 0;
-            routeCoords = [];
-            lastPosition = null;
-
+        // --- TRACKING CONTROLS ---
+        window.startTracking = function() {
+            isTracking = true; isPaused = false; startTime = Date.now();
+            elapsedPausedTime = 0; totalDistance = 0; routeCoords = []; lastPosition = null;
             timerInterval = setInterval(updateTimer, 1000);
-            
-            watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, {
-                enableHighAccuracy: true,
-                maximumAge: 0,
-                timeout: 5000
+            watchId = navigator.geolocation.watchPosition(onGeoSuccess, console.error, {
+                enableHighAccuracy: true, maximumAge: 0, timeout: 5000
             });
-
             document.getElementById('btnStart').style.display = 'none';
             document.getElementById('btnStop').style.display = 'inline-block';
             document.getElementById('btnShare').style.display = 'none';
-        }
+        };
 
-        function stopTracking() {
+        window.stopTracking = function() {
             isTracking = false;
             clearInterval(timerInterval);
             navigator.geolocation.clearWatch(watchId);
-
             document.getElementById('btnStop').style.display = 'none';
-            document.getElementById('btnShare').style.display = 'inline-block';
-            
-            // Tampilkan modal save
             document.getElementById('saveModal').style.display = 'flex';
-        }
+        };
 
-        function closeModal() {
+        window.closeModal = function() {
             document.getElementById('saveModal').style.display = 'none';
-        }
+        };
 
-        // --- SAVE & SHARE ---
-        function saveAndShare() {
-            const name = document.getElementById('actName').value || "Aktivitas Tanpa Judul";
-            const equipment = document.getElementById('actEquipment').value;
-            const time = document.getElementById('timeDisplay').innerText;
-            const dist = document.getElementById('distDisplay').innerText;
-            const pace = document.getElementById('paceDisplay').innerText;
-
-            // 1. Simpan ke LocalStorage (Database Lokal)
-            const activity = {
-                id: Date.now(),
-                name, equipment, time, dist, pace,
-                route: routeCoords,
-                date: new Date().toLocaleDateString()
-            };
-            
-            let history = JSON.parse(localStorage.getItem('sportHistory') || '[]');
-            history.unshift(activity);
-            localStorage.setItem('sportHistory', JSON.stringify(history));
-
-            // 2. Share ke Media Sosial (Web Share API)
-            const shareText = `🏃 ${name}\n📏 Jarak: ${dist} km\n⏱ Waktu: ${time}\n⚡ Pace: ${pace} min/km\n👟 Peralatan: ${equipment}\n\n#SportTrackerWeb`;
-            
-            if (navigator.share) {
-                navigator.share({
-                    title: name,
-                    text: shareText,
-                    // url: window.location.href // Bisa diganti link ke web Anda
-                }).catch(console.error);
-            } else {
-                // Fallback jika Web Share API tidak didukung (biasanya di Desktop)
-                alert("Aktivitas Tersimpan!\n\n" + shareText);
+        // --- GENERATE MAP IMAGE & SHARE ---
+        window.prepareShare = async function() {
+            document.getElementById('loading').style.display = 'block';
+            try {
+                // Generate gambar dari map
+                const mapElement = document.getElementById('map');
+                const canvas = await html2canvas(mapElement, {
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null
+                });
+                
+                currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                
+                // Share dengan gambar
+                if (navigator.canShare && navigator.canShare({ files: [new File([currentMapImage], 'activity.png', { type: 'image/png' })] })) {
+                    await navigator.share({
+                        title: document.getElementById('actName').value || 'Aktivitas Olahraga',
+                        text: `Jarak: ${document.getElementById('distDisplay').innerText} km\nWaktu: ${document.getElementById('timeDisplay').innerText}`,
+                        files: [new File([currentMapImage], 'activity.png', { type: 'image/png' })]
+                    });
+                } else {
+                    // Fallback: download gambar
+                    const link = document.createElement('a');
+                    link.download = 'activity-map.png';
+                    link.href = canvas.toDataURL();
+                    link.click();
+                    alert('Gambar peta telah diunduh!');
+                }
+            } catch (error) {
+                console.error('Error generating image:', error);
+                alert('Gagal generate gambar');
             }
+            document.getElementById('loading').style.display = 'none';
+        };
 
+        // --- SAVE TO FIREBASE ---
+        window.saveActivity = async function() {
+            const name = document.getElementById('actName').value || 'Aktivitas';
+            const equipment = document.getElementById('actEquipment').value;
+            const activity = {
+                name, equipment,
+                time: document.getElementById('timeDisplay').innerText,
+                dist: document.getElementById('distDisplay').innerText,
+                pace: document.getElementById('paceDisplay').innerText,
+                route: routeCoords
+            };
+
+            document.getElementById('loading').style.display = 'block';
+            
+            // Simpan ke Firebase
+            const result = await window.saveActivityToFirebase(activity, currentMapImage);
+            
+            if (result.success) {
+                alert('Aktivitas berhasil disimpan ke cloud!');
+                resetUI();
+            } else {
+                alert('Disimpan lokal (offline). Akan disinkronisasi nanti.');
+            }
+            
+            document.getElementById('loading').style.display = 'none';
             closeModal();
-            resetUI();
+        };
+
+        // --- SHOW HISTORY ---
+        window.showHistory = async function() {
+            document.getElementById('historyModal').style.display = 'flex';
+            const list = document.getElementById('activityList');
+            list.innerHTML = 'Loading...';
+            
+            // Ambil dari Firebase
+            const activities = await window.getUserActivities();
+            
+            if (activities.length === 0) {
+                // Fallback ke localStorage
+                const local = JSON.parse(localStorage.getItem('sportHistory') || '[]');
+                renderHistoryList(local);
+            } else {
+                renderHistoryList(activities);
+            }
+        };
+
+        function renderHistoryList(activities) {
+            const list = document.getElementById('activityList');
+            if (activities.length === 0) {
+                list.innerHTML = '<p>Belum ada aktivitas</p>';
+                return;
+            }
+            
+            list.innerHTML = activities.map(act => `
+                <div class="activity-item">
+                    <div class="activity-info">
+                        <h4>${act.name}</h4>
+                        <p>📏 ${act.distance || act.dist} km | ⏱ ${act.duration || act.time}</p>
+                        <p>👟 ${act.equipment} | 📅 ${new Date(act.createdAt || act.date).toLocaleDateString()}</p>
+                    </div>
+                </div>
+            `).join('');
         }
+
+        window.closeHistory = function() {
+            document.getElementById('historyModal').style.display = 'none';
+        };
 
         function resetUI() {
             document.getElementById('btnStart').style.display = 'inline-block';
