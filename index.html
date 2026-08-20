@@ -41,14 +41,8 @@
             opacity: 0.4;
             animation: ripple 2s infinite;
         }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        @keyframes ripple {
-            0% { width: 100%; height: 100%; opacity: 0.4; }
-            100% { width: 250%; height: 250%; opacity: 0; }
-        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes ripple { 0% { width: 100%; height: 100%; opacity: 0.4; } 100% { width: 250%; height: 250%; opacity: 0; } }
         
         .start-marker {
             background: #28a745;
@@ -98,8 +92,8 @@
             font-size: 20px; transition: transform 0.2s;
         }
         .floating-btn:active { transform: scale(0.9); }
-        #btnCenter { bottom: 280px; }
-        #btnFollow { bottom: 340px; }
+        /* Tombol center dihapus, follow button diposisikan lebih rendah */
+        #btnFollow { bottom: 280px; }
         #btnFollow.active { background: #1a73e8; color: white; }
         
         /* Status Bar */
@@ -110,14 +104,8 @@
             display: flex; align-items: center; justify-content: space-between;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .status-indicator {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 13px; font-weight: 600; color: #333;
-        }
-        .status-dot {
-            width: 10px; height: 10px; border-radius: 50%;
-            background: #ffc107;
-        }
+        .status-indicator { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #333; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ffc107; }
         .status-dot.ready { background: #28a745; animation: blink 1.5s infinite; }
         .status-dot.tracking { background: #1a73e8; animation: blink 1s infinite; }
         .status-dot.paused { background: #ffc107; animation: none; }
@@ -128,8 +116,7 @@
         .gps-loading {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(255,255,255,0.95); z-index: 3000;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
         .gps-loading.hidden { display: none; }
         .gps-loading .spinner {
@@ -137,8 +124,7 @@
             width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 20px;
         }
         .gps-loading-text { color: #333; font-size: 16px; font-weight: 600; }
-        .gps-loading-sub { color: #666; font-size: 13px; margin-top: 8px; }
-        
+        .gps-loading-sub { color: #666; font-size: 13px; margin-top: 8px; text-align: center; padding: 0 20px;}
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         /* Modal */
@@ -199,9 +185,8 @@
         <div class="accuracy-info" id="accuracyInfo">Akurasi: -</div>
     </div>
     
-    <!-- Floating Buttons -->
-    <button class="floating-btn" id="btnFollow" onclick="toggleFollow()" title="Auto-follow"></button>
-    <button class="floating-btn" id="btnCenter" onclick="centerMap()" title="Pusatkan peta">🎯</button>
+    <!-- Floating Buttons (Tombol Center Dihapus) -->
+    <button class="floating-btn" id="btnFollow" onclick="toggleFollow()" title="Auto-follow">📍</button>
     
     <div id="loading">
         <div class="spinner"></div>
@@ -268,6 +253,7 @@
         const MIN_ACCURACY = 30;
         const MAX_JUMP = 50;
         const AUTO_PAUSE_SPEED = 1.5;
+        const AUTO_CENTER_DELAY = 5000; // 5 detik delay sebelum auto-center
 
         // ==========================================
         // USER ID
@@ -297,7 +283,7 @@
         L.control.zoom({ position: 'topright' }).addTo(map);
 
         // ==========================================
-        // VARIABEL TRACKING
+        // VARIABEL TRACKING & AUTO-CENTER
         // ==========================================
         let polyline = null;
         let currentMarker = null;
@@ -307,6 +293,7 @@
         let isPaused = false;
         let autoFollow = true;
         let userInteracted = false;
+        let autoCenterTimer = null; // Timer untuk auto-center
         let startTime = 0;
         let elapsedPausedTime = 0;
         let timerInterval = null;
@@ -356,9 +343,10 @@
             startMarker.bindPopup('<b>🚩 Titik Mulai</b>').openPopup();
         }
 
-        function centerMap() {
+        // Fungsi untuk memusatkan peta ke user
+        function forceCenterMap() {
             if (lastPosition) {
-                map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true });
+                map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true, duration: 1 });
                 userInteracted = false;
             }
         }
@@ -366,13 +354,31 @@
         function toggleFollow() {
             autoFollow = !autoFollow;
             document.getElementById('btnFollow').classList.toggle('active', autoFollow);
-            if (autoFollow && lastPosition) {
-                centerMap();
+            if (autoFollow) {
+                forceCenterMap();
             }
         }
 
-        map.on('dragstart zoomstart', () => {
-            if (isTracking) userInteracted = true;
+        // ==========================================
+        // LOGIKA AUTO-CENTER (5 DETIK)
+        // ==========================================
+        // Reset timer saat user mulai menggeser/zoom
+        map.on('dragstart zoomstart movestart', () => {
+            clearTimeout(autoCenterTimer);
+            userInteracted = true;
+        });
+
+        // Mulai hitung mundur 5 detik setelah user berhenti menggeser
+        map.on('dragend zoomend moveend', () => {
+            if (userInteracted && lastPosition && gpsReady) {
+                clearTimeout(autoCenterTimer);
+                autoCenterTimer = setTimeout(() => {
+                    // Cek lagi apakah user tidak berinteraksi selama 5 detik
+                    if (userInteracted) {
+                        forceCenterMap();
+                    }
+                }, AUTO_CENTER_DELAY);
+            }
         });
 
         // ==========================================
@@ -423,7 +429,7 @@
         }
 
         // ==========================================
-        // GPS HANDLER - DIPANGGIL SAAT APLIKASI DIBUKA
+        // GPS HANDLER
         // ==========================================
         function onGeoSuccess(position) {
             const { latitude: lat, longitude: lng, accuracy } = position.coords;
@@ -440,21 +446,18 @@
                 gpsFirstLock = true;
                 gpsReady = true;
                 
-                // Sembunyikan loading screen
                 document.getElementById('gpsLoading').classList.add('hidden');
-                
-                // Peta ke lokasi user dengan animasi
                 map.setView([lat, lng], DEFAULT_ZOOM, { animate: true });
                 
-                // Update status
                 updateStatus('✅ GPS Siap - Tekan Mulai', 'ready');
-                
-                // Enable tombol Mulai
                 document.getElementById('btnStart').disabled = false;
                 
                 lastPosition = currentPos;
                 return;
             }
+
+            // Update posisi terakhir untuk auto-center
+            lastPosition = currentPos;
 
             if (isTracking) {
                 const shouldPause = checkAutoPause(currentPos);
@@ -466,39 +469,42 @@
                     updateStatus('▶ Berlari...', 'tracking');
                 }
 
+                // Tambahkan titik ke rute
                 if (lastPosition && !isPaused) {
-                    const dist = getDistanceFromLatLonInM(lastPosition.lat, lastPosition.lng, lat, lng);
-                    if (dist < MAX_JUMP) {
+                    // Kita perlu posisi sebelumnya untuk hitung jarak, tapi lastPosition sudah diupdate di atas.
+                    // Untuk akurasi, kita simpan previous position di variabel terpisah saat tracking
+                }
+                
+                // Logika rute yang lebih aman
+                if (routeCoords.length > 0) {
+                    const prevPos = routeCoords[routeCoords.length - 1];
+                    const dist = getDistanceFromLatLonInM(prevPos[0], prevPos[1], lat, lng);
+                    
+                    if (dist < MAX_JUMP && !isPaused) {
                         totalDistance += dist;
                         routeCoords.push([lat, lng]);
                         
                         if (!polyline) {
                             polyline = L.polyline(routeCoords, {
-                                color: '#fc4c02',
-                                weight: 5,
-                                opacity: 0.9,
-                                lineCap: 'round',
-                                lineJoin: 'round'
+                                color: '#fc4c02', weight: 5, opacity: 0.9,
+                                lineCap: 'round', lineJoin: 'round'
                             }).addTo(map);
                         } else {
                             polyline.addLatLng([lat, lng]);
                         }
                     }
-                } else if (!lastPosition) {
+                } else if (!isPaused) {
+                    // Titik pertama saat tracking dimulai
                     routeCoords.push([lat, lng]);
                     polyline = L.polyline(routeCoords, {
-                        color: '#fc4c02',
-                        weight: 5,
-                        opacity: 0.9,
-                        lineCap: 'round',
-                        lineJoin: 'round'
+                        color: '#fc4c02', weight: 5, opacity: 0.9,
+                        lineCap: 'round', lineJoin: 'round'
                     }).addTo(map);
-                    addStartMarker(lat, lng);
                 }
 
                 document.getElementById('distDisplay').innerText = (totalDistance / 1000).toFixed(2);
-                lastPosition = currentPos;
 
+                // Auto-pan saat tracking (jika user tidak interaksi manual)
                 if (autoFollow && !userInteracted) {
                     map.panTo([lat, lng], { animate: true, duration: 0.5 });
                 }
@@ -522,7 +528,7 @@
         function startTracking() {
             isTracking = true;
             isPaused = false;
-            userInteracted = false;
+            userInteracted = false; // Reset interaksi agar auto-center aktif
             startTime = Date.now();
             elapsedPausedTime = 0;
             totalDistance = 0;
@@ -541,13 +547,13 @@
             // Tambahkan marker start di posisi saat ini
             if (lastPosition) {
                 addStartMarker(lastPosition.lat, lastPosition.lng);
+                forceCenterMap(); // Paksa center saat mulai
             }
         }
 
         function stopTracking() {
             isTracking = false;
             clearInterval(timerInterval);
-            
             updateStatus('✅ Selesai - Simpan aktivitas', 'ready');
             
             document.getElementById('btnStop').style.display = 'none';
@@ -611,7 +617,7 @@
                         if (navigator.canShare({ files: [file] })) {
                             await navigator.share({
                                 title: name,
-                                text: `🏃 ${name}\n📏 ${activity.dist} km | ⏱ ${activity.time}\n⚡ Pace: ${activity.pace}\n ${equipment}\n\n#VeloRun`,
+                                text: `🏃 ${name}\n📏 ${activity.dist} km |  ${activity.time}\n⚡ Pace: ${activity.pace}\n👟 ${equipment}\n\n#VeloRun`,
                                 files: [file]
                             });
                         }
@@ -640,17 +646,13 @@
                 await new Promise(r => setTimeout(r, 800));
                 
                 const canvas = await html2canvas(mapElement, {
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#ffffff',
-                    scale: 2
+                    useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scale: 2
                 });
                 
                 currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                 saveActivity();
             } catch (error) {
                 console.error('Error:', error);
-                alert('Gagal membuat gambar. Menyimpan tanpa gambar...');
                 currentMapImage = null;
                 saveActivity();
             }
@@ -672,25 +674,13 @@
                         <div class="activity-item">
                             <div class="activity-info">
                                 <h4>${act.name}</h4>
-                                <p>📏 ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
-                                <p>👟 ${act.equipment} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                <p>📏 ${act.distance} km | ⏱ ${act.duration} |  ${act.pace}</p>
+                                <p>👟 ${act.equipment} |  ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                             </div>
                         </div>
                     `).join('');
                 } else {
-                    const local = JSON.parse(localStorage.getItem('velorun_pending') || '[]');
-                    if (local.length > 0) {
-                        list.innerHTML = local.map(act => `
-                            <div class="activity-item" style="border-left-color: #ffc107;">
-                                <div class="activity-info">
-                                    <h4>${act.activity.name} (Belum sync)</h4>
-                                    <p>📏 ${act.activity.dist} km | ⏱ ${act.activity.time}</p>
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        list.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Belum ada aktivitas.</div>';
-                    }
+                    list.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Belum ada aktivitas.</div>';
                 }
             } catch (error) {
                 list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data.</div>';
@@ -720,27 +710,20 @@
         }
 
         // ==========================================
-        // INISIALISASI GPS SAAT APLIKASI DIBUKA
+        // INISIALISASI GPS
         // ==========================================
         function initGPS() {
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, {
-                    enableHighAccuracy: true,
-                    maximumAge: 0,
-                    timeout: 15000
+                    enableHighAccuracy: true, maximumAge: 0, timeout: 15000
                 });
             } else {
                 document.getElementById('gpsLoading').querySelector('.gps-loading-text').innerText = 'GPS Tidak Didukung';
-                document.getElementById('gpsLoading').querySelector('.gps-loading-sub').innerText = 'Browser Anda tidak mendukung GPS';
             }
         }
 
-        // Panggil initGPS saat aplikasi load
         window.addEventListener('load', initGPS);
 
-        // ==========================================
-        // PWA
-        // ==========================================
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed:', err));
         }
