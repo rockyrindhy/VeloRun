@@ -14,7 +14,7 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <!-- html2canvas untuk generate gambar peta -->
+    <!-- html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
@@ -22,32 +22,107 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
         #map { width: 100%; height: 100%; z-index: 1; }
         
+        /* Custom Marker Styles */
+        .current-position-marker {
+            background: #1a73e8;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+        .current-position-marker::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background: #1a73e8;
+            opacity: 0.4;
+            animation: ripple 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        @keyframes ripple {
+            0% { width: 100%; height: 100%; opacity: 0.4; }
+            100% { width: 250%; height: 250%; opacity: 0; }
+        }
+        
+        .start-marker {
+            background: #28a745;
+            border: 3px solid white;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        
+        /* Control Panel */
         .overlay {
             position: absolute; bottom: 0; left: 0; right: 0;
             background: rgba(255, 255, 255, 0.98);
             border-radius: 24px 24px 0 0;
-            padding: 24px 20px;
+            padding: 20px;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
             z-index: 1000;
-            text-align: center;
         }
-        .stats { display: flex; justify-content: space-around; margin-bottom: 24px; }
+        .stats { display: flex; justify-content: space-around; margin-bottom: 16px; }
         .stat-item { text-align: center; flex: 1; }
-        .stat-value { font-size: 28px; font-weight: 800; color: #fc4c02; letter-spacing: -0.5px; }
-        .stat-label { font-size: 11px; color: #666; text-transform: uppercase; font-weight: 600; margin-top: 4px; }
+        .stat-value { font-size: 24px; font-weight: 800; color: #fc4c02; letter-spacing: -0.5px; }
+        .stat-label { font-size: 10px; color: #666; text-transform: uppercase; font-weight: 600; margin-top: 2px; }
         
-        .btn-group { display: flex; gap: 12px; justify-content: center; }
+        .btn-group { display: flex; gap: 10px; justify-content: center; }
         .btn {
-            flex: 1; padding: 16px; border: none; border-radius: 16px;
-            font-size: 16px; font-weight: 700; color: white; cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            flex: 1; padding: 14px; border: none; border-radius: 14px;
+            font-size: 15px; font-weight: 700; color: white; cursor: pointer;
+            transition: transform 0.1s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .btn:active { transform: scale(0.96); }
         .btn-start { background: linear-gradient(135deg, #28a745, #20c997); }
         .btn-stop { background: linear-gradient(135deg, #dc3545, #ff6b6b); }
         .btn-share { background: linear-gradient(135deg, #007bff, #0056b3); }
-        .btn-history { background: linear-gradient(135deg, #6c757d, #495057); flex: 0.5; }
+        .btn-icon { 
+            flex: 0.4; padding: 14px 8px; background: linear-gradient(135deg, #6c757d, #495057);
+            font-size: 18px;
+        }
         
+        /* Floating Buttons */
+        .floating-btn {
+            position: absolute; right: 16px; z-index: 999;
+            width: 48px; height: 48px; border-radius: 50%;
+            background: white; border: none; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; transition: transform 0.2s;
+        }
+        .floating-btn:active { transform: scale(0.9); }
+        #btnCenter { bottom: 280px; }
+        #btnFollow { bottom: 340px; }
+        #btnFollow.active { background: #1a73e8; color: white; }
+        
+        /* Status Bar */
+        .status-bar {
+            position: absolute; top: 16px; left: 16px; right: 16px;
+            background: rgba(255,255,255,0.95); padding: 10px 16px;
+            border-radius: 12px; z-index: 999;
+            display: none; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .status-bar.active { display: flex; }
+        .status-indicator {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 600; color: #333;
+        }
+        .status-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #28a745; animation: blink 1.5s infinite;
+        }
+        .status-dot.paused { background: #ffc107; animation: none; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .accuracy-info { font-size: 11px; color: #666; }
+        
+        /* Modal */
         .modal {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.6); z-index: 2000; backdrop-filter: blur(4px);
@@ -58,15 +133,14 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: slideUp 0.3s ease;
         }
         @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
         .modal-content h3 { margin: 0 0 20px 0; color: #333; font-size: 20px; }
         .modal-content input, .modal-content select {
             width: 100%; padding: 14px; margin: 10px 0; border: 2px solid #e9ecef; 
-            border-radius: 12px; font-size: 16px; outline: none; transition: border-color 0.2s;
+            border-radius: 12px; font-size: 16px; outline: none;
         }
         .modal-content input:focus, .modal-content select:focus { border-color: #fc4c02; }
         
-        .activity-list { max-height: 60vh; overflow-y: auto; margin-top: 10px; }
+        .activity-list { max-height: 60vh; overflow-y: auto; }
         .activity-item {
             background: #f8f9fa; padding: 16px; margin: 10px 0; border-radius: 12px;
             border-left: 4px solid #fc4c02;
@@ -76,7 +150,7 @@
         
         #loading { 
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.9); z-index: 3000;
+            background: rgba(255,255,255,0.95); z-index: 3000;
             justify-content: center; align-items: center; flex-direction: column;
         }
         .spinner {
@@ -85,16 +159,28 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-text { color: #666; font-weight: 600; }
-   0
-</style>
+    </style>
 </head>
 <body>
 
     <div id="map"></div>
     
+    <!-- Status Bar (muncul saat tracking) -->
+    <div class="status-bar" id="statusBar">
+        <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Mencari GPS...</span>
+        </div>
+        <div class="accuracy-info" id="accuracyInfo">Akurasi: -</div>
+    </div>
+    
+    <!-- Floating Buttons -->
+    <button class="floating-btn" id="btnFollow" onclick="toggleFollow()" title="Auto-follow"></button>
+    <button class="floating-btn" id="btnCenter" onclick="centerMap()" title="Pusatkan peta">🎯</button>
+    
     <div id="loading">
         <div class="spinner"></div>
-        <div class="loading-text">Menyimpan ke VeloRun Cloud...</div>
+        <div class="loading-text" id="loadingText">Menyimpan ke VeloRun Cloud...</div>
     </div>
 
     <div class="overlay" id="controlPanel">
@@ -109,25 +195,25 @@
             </div>
             <div class="stat-item">
                 <div class="stat-value" id="paceDisplay">0:00</div>
-                <div class="stat-label">Pace (min/km)</div>
+                <div class="stat-label">Pace</div>
             </div>
         </div>
         <div class="btn-group">
-            <button class="btn btn-history" onclick="showHistory()">📋</button>
+            <button class="btn btn-icon" onclick="showHistory()">📋</button>
             <button class="btn btn-start" id="btnStart" onclick="startTracking()">▶ Mulai</button>
-            <button class="btn btn-stop" id="btnStop" onclick="stopTracking()" style="display:none;">⏹ Selesai</button>
-            <button class="btn btn-share" id="btnShare" onclick="prepareShare()" style="display:none;">💾 Simpan & Share</button>
-        </div
+            <button class="btn btn-stop" id="btnStop" onclick="stopTracking()" style="display:none;">⏹ Stop</button>
+            <button class="btn btn-share" id="btnShare" onclick="prepareShare()" style="display:none;">💾 Simpan</button>
+        </div>
     </div>
 
     <!-- Modal Save -->
     <div class="modal" id="saveModal">
         <div class="modal-content">
             <h3>💾 Simpan Aktivitas</h3>
-            <input type="text" id="actName" placeholder="Nama Aktivitas (cth: Lari Pagi)" value="Lari Pagi">
+            <input type="text" id="actName" placeholder="Nama Aktivitas" value="Lari Pagi">
             <select id="actEquipment">
                 <option value="Sepatu Lari">👟 Sepatu Lari</option>
-                <option value="Sepeda">🚴 Sepeda</option>
+                <option value="Sepeda"> Sepeda</option>
                 <option value="Jalan Kaki">🚶 Jalan Kaki</option>
             </select>
             <div class="btn-group" style="margin-top: 20px;">
@@ -146,16 +232,21 @@
         </div>
     </div>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
         // ==========================================
-        // KONFIGURASI VELO RUN
+        // KONFIGURASI
         // ==========================================
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbyv6XJPXkUx6CfGxOy8KpelHeRwtb-hBxrfqb2PqeiIrByl6GsNFOjz2T2ZHyapYkel/exec';
-        
-        // Generate atau ambil User ID unik
+        const DEFAULT_ZOOM = 16; // Zoom level untuk radius ~3000-4000m
+        const MIN_ACCURACY = 30; // Meter, abaikan GPS dengan akurasi > ini
+        const MAX_JUMP = 50; // Meter, abaikan loncatan GPS > ini
+        const AUTO_PAUSE_SPEED = 1.5; // km/jam, di bawah ini = pause
+
+        // ==========================================
+        // USER ID
+        // ==========================================
         function getUserId() {
             let userId = localStorage.getItem('velorun_userId');
             if (!userId) {
@@ -166,18 +257,98 @@
         }
 
         // ==========================================
-        // VARIABEL TRACKING
+        // INISIALISASI PETA
         // ==========================================
-        const map = L.map('map', { zoomControl: false }).setView([-6.2088, 106.8456], 13);
+        const map = L.map('map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([-6.2088, 106.8456], DEFAULT_ZOOM);
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap',
-            crossOrigin: 'anonymous' // Penting untuk html2canvas
+            maxZoom: 19,
+            crossOrigin: 'anonymous'
         }).addTo(map);
 
-        let polyline = null, watchId = null, isTracking = false, isPaused = false;
-        let startTime = 0, elapsedPausedTime = 0, timerInterval = null;
-        let totalDistance = 0, lastPosition = null, routeCoords = [];
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        // ==========================================
+        // VARIABEL TRACKING
+        // ==========================================
+        let polyline = null;
+        let currentMarker = null;
+        let startMarker = null;
+        let watchId = null;
+        let isTracking = false;
+        let isPaused = false;
+        let autoFollow = true;
+        let userInteracted = false;
+        let startTime = 0;
+        let elapsedPausedTime = 0;
+        let timerInterval = null;
+        let totalDistance = 0;
+        let lastPosition = null;
+        let routeCoords = [];
         let currentMapImage = null;
+        let gpsFound = false;
+
+        // ==========================================
+        // FUNGSI PETA & MARKER
+        // ==========================================
+        function createCurrentPositionIcon() {
+            return L.divIcon({
+                className: 'current-position-marker',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+        }
+
+        function createStartIcon() {
+            return L.divIcon({
+                className: 'start-marker',
+                iconSize: [16, 16],
+                iconAnchor: [8, 16]
+            });
+        }
+
+        function updateCurrentMarker(lat, lng) {
+            if (!currentMarker) {
+                currentMarker = L.marker([lat, lng], {
+                    icon: createCurrentPositionIcon(),
+                    zIndexOffset: 1000
+                }).addTo(map);
+            } else {
+                currentMarker.setLatLng([lat, lng]);
+            }
+        }
+
+        function addStartMarker(lat, lng) {
+            if (startMarker) map.removeLayer(startMarker);
+            startMarker = L.marker([lat, lng], {
+                icon: createStartIcon(),
+                title: 'Titik Mulai'
+            }).addTo(map);
+            startMarker.bindPopup('<b> Titik Mulai</b>').openPopup();
+        }
+
+        function centerMap() {
+            if (lastPosition) {
+                map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true });
+                userInteracted = false;
+            }
+        }
+
+        function toggleFollow() {
+            autoFollow = !autoFollow;
+            document.getElementById('btnFollow').classList.toggle('active', autoFollow);
+            if (autoFollow && lastPosition) {
+                centerMap();
+            }
+        }
+
+        // Deteksi interaksi user dengan peta
+        map.on('dragstart zoomstart', () => {
+            if (isTracking) userInteracted = true;
+        });
 
         // ==========================================
         // FUNGSI HELPER
@@ -194,8 +365,8 @@
             if (!lastPosition) return false;
             const dist = getDistanceFromLatLonInM(lastPosition.lat, lastPosition.lng, currentPos.lat, currentPos.lng);
             const timeDiff = (Date.now() - lastPosition.timestamp) / 1000;
-            if (timeDiff < 1) return true; // Abaikan jika terlalu cepat (GPS jitter)
-            return (dist / timeDiff * 3.6) < 1.5; // Pause jika kecepatan < 1.5 km/jam
+            if (timeDiff < 1) return true;
+            return (dist / timeDiff * 3.6) < AUTO_PAUSE_SPEED;
         }
 
         function updateTimer() {
@@ -220,74 +391,140 @@
             document.getElementById('paceDisplay').innerText = `${paceMins}:${String(paceSecs).padStart(2,'0')}`;
         }
 
+        function updateStatus(text, paused = false) {
+            document.getElementById('statusText').innerText = text;
+            const dot = document.getElementById('statusDot');
+            dot.classList.toggle('paused', paused);
+        }
+
         // ==========================================
         // GPS HANDLER
         // ==========================================
         function onGeoSuccess(position) {
             const { latitude: lat, longitude: lng, accuracy } = position.coords;
-            if (accuracy > 25) return; // Abaikan jika akurasi buruk
+            
+            // Update info akurasi
+            document.getElementById('accuracyInfo').innerText = `Akurasi: ${Math.round(accuracy)}m`;
+            
+            // Filter GPS tidak akurat
+            if (accuracy > MIN_ACCURACY) return;
 
             const currentPos = { lat, lng, timestamp: Date.now() };
 
+            // Update marker posisi saat ini (selalu update, bahkan sebelum tracking)
+            updateCurrentMarker(lat, lng);
+
             if (isTracking) {
+                // Auto-pause detection
                 const shouldPause = checkAutoPause(currentPos);
                 if (shouldPause && !isPaused) { 
                     isPaused = true; 
-                    console.log("⏸ Auto-Pause: Berhenti bergerak"); 
+                    updateStatus('⏸ Jeda (berhenti)', true);
                 } else if (!shouldPause && isPaused) { 
                     isPaused = false; 
-                    console.log("▶ Auto-Resume: Bergerak kembali"); 
+                    updateStatus('▶ Berlari...', false);
                 }
 
+                // Tambahkan titik ke rute HANYA jika tidak pause
                 if (lastPosition && !isPaused) {
                     const dist = getDistanceFromLatLonInM(lastPosition.lat, lastPosition.lng, lat, lng);
-                    if (dist < 50) { // Filter loncatan GPS
+                    if (dist < MAX_JUMP) {
                         totalDistance += dist;
                         routeCoords.push([lat, lng]);
+                        
+                        // Buat polyline jika belum ada
                         if (!polyline) {
-                            polyline = L.polyline(routeCoords, {color: '#fc4c02', weight: 6, lineCap: 'round'}).addTo(map);
+                            polyline = L.polyline(routeCoords, {
+                                color: '#fc4c02',
+                                weight: 5,
+                                opacity: 0.9,
+                                lineCap: 'round',
+                                lineJoin: 'round'
+                            }).addTo(map);
                         } else {
                             polyline.addLatLng([lat, lng]);
                         }
                     }
                 } else if (!lastPosition) {
+                    // Titik pertama - buat polyline dengan 1 titik (akan update saat titik ke-2 datang)
                     routeCoords.push([lat, lng]);
-                    polyline = L.polyline(routeCoords, {color: '#fc4c02', weight: 6, lineCap: 'round'}).addTo(map);
+                    polyline = L.polyline(routeCoords, {
+                        color: '#fc4c02',
+                        weight: 5,
+                        opacity: 0.9,
+                        lineCap: 'round',
+                        lineJoin: 'round'
+                    }).addTo(map);
+                    addStartMarker(lat, lng);
                 }
 
                 document.getElementById('distDisplay').innerText = (totalDistance / 1000).toFixed(2);
-                map.panTo([lat, lng]);
                 lastPosition = currentPos;
+
+                // Auto-follow jika user tidak interaksi manual
+                if (autoFollow && !userInteracted) {
+                    map.panTo([lat, lng], { animate: true, duration: 0.5 });
+                }
             }
         }
 
         function onGeoError(error) {
             console.error("GPS Error:", error);
-            alert("Gagal mengakses GPS. Pastikan izin lokasi diaktifkan dan gunakan HTTPS.");
+            let msg = "Gagal mengakses GPS.";
+            if (error.code === 1) msg = "Izin lokasi ditolak. Aktifkan di settings browser.";
+            else if (error.code === 2) msg = "GPS tidak tersedia.";
+            else if (error.code === 3) msg = "Timeout GPS. Coba di area terbuka.";
+            alert(msg);
         }
 
         // ==========================================
-        // KONTROL APLIKASI
+        // KONTROL TRACKING
         // ==========================================
         function startTracking() {
-            isTracking = true; isPaused = false; 
-            startTime = Date.now(); elapsedPausedTime = 0; 
-            totalDistance = 0; routeCoords = []; lastPosition = null;
+            // Reset semua state
+            isTracking = true;
+            isPaused = false;
+            gpsFound = false;
+            userInteracted = false;
+            startTime = Date.now();
+            elapsedPausedTime = 0;
+            totalDistance = 0;
+            routeCoords = [];
+            lastPosition = null;
             
+            // Hapus marker & polyline lama
+            if (polyline) { map.removeLayer(polyline); polyline = null; }
+            if (currentMarker) { map.removeLayer(currentMarker); currentMarker = null; }
+            if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
+            
+            // UI Updates
             timerInterval = setInterval(updateTimer, 1000);
-            watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, {
-                enableHighAccuracy: true, maximumAge: 0, timeout: 10000
-            });
+            document.getElementById('statusBar').classList.add('active');
+            document.getElementById('btnFollow').classList.add('active');
+            updateStatus('📡 Mencari GPS...');
             
             document.getElementById('btnStart').style.display = 'none';
             document.getElementById('btnStop').style.display = 'block';
             document.getElementById('btnShare').style.display = 'none';
+            
+            // Mulai watch GPS
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 15000
+                });
+            } else {
+                alert("Browser Anda tidak mendukung GPS.");
+            }
         }
 
         function stopTracking() {
             isTracking = false;
             clearInterval(timerInterval);
-            navigator.geolocation.clearWatch(watchId);
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            
+            document.getElementById('statusBar').classList.remove('active');
             document.getElementById('btnStop').style.display = 'none';
             document.getElementById('btnShare').style.display = 'block';
             document.getElementById('saveModal').style.display = 'flex';
@@ -302,7 +539,7 @@
         }
 
         // ==========================================
-        // SIMPAN & SHARE (GOOGLE APPS SCRIPT)
+        // SIMPAN & SHARE
         // ==========================================
         async function saveActivity() {
             const name = document.getElementById('actName').value || 'Aktivitas VeloRun';
@@ -318,47 +555,38 @@
             };
 
             document.getElementById('loading').style.display = 'flex';
+            document.getElementById('loadingText').innerText = 'Menyimpan ke VeloRun Cloud...';
             closeModal();
 
             try {
-                // 1. Convert gambar ke Base64
                 let imageData = null;
                 if (currentMapImage) {
                     imageData = await blobToBase64(currentMapImage);
                 }
 
-                // 2. Kirim ke Google Apps Script
                 const payload = {
-                    userId: userId,
-                    name: activity.name,
-                    equipment: activity.equipment,
-                    distance: parseFloat(activity.dist),
-                    duration: activity.time,
-                    pace: activity.pace,
-                    route: activity.route,
-                    imageData: imageData
+                    userId, name: activity.name, equipment: activity.equipment,
+                    distance: parseFloat(activity.dist), duration: activity.time,
+                    pace: activity.pace, route: activity.route, imageData
                 };
 
-                // Gunakan text/plain untuk menghindari CORS preflight OPTIONS yang sering gagal di GAS
                 const response = await fetch(GAS_URL, {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
                 
-                // GAS selalu return redirect, kita baca sebagai text lalu parse
                 const responseText = await response.text();
                 const result = JSON.parse(responseText);
 
                 if (result.success) {
                     alert('✅ Berhasil!\n\nData tersimpan di Google Sheets.\nGambar tersimpan di Google Drive.');
                     
-                    // Share otomatis jika didukung
                     if (navigator.share && currentMapImage) {
                         const file = new File([currentMapImage], 'velorun.png', { type: 'image/png' });
                         if (navigator.canShare({ files: [file] })) {
                             await navigator.share({
                                 title: name,
-                                text: `🏃 ${name}\n📏 ${activity.dist} km | ⏱ ${activity.time}\n⚡ Pace: ${activity.pace}\n👟 ${equipment}\n\n#VeloRun`,
+                                text: `🏃 ${name}\n ${activity.dist} km | ⏱ ${activity.time}\n⚡ Pace: ${activity.pace}\n👟 ${equipment}\n\n#VeloRun`,
                                 files: [file]
                             });
                         }
@@ -370,7 +598,6 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('⚠️ Gagal menyimpan ke cloud. Data disimpan sementara di perangkat.');
-                // Fallback localStorage
                 const pending = JSON.parse(localStorage.getItem('velorun_pending') || '[]');
                 pending.push({ activity, timestamp: Date.now() });
                 localStorage.setItem('velorun_pending', JSON.stringify(pending));
@@ -381,28 +608,24 @@
 
         async function prepareShare() {
             document.getElementById('loading').style.display = 'flex';
-            document.querySelector('.loading-text').innerText = 'Membuat gambar peta...';
+            document.getElementById('loadingText').innerText = 'Membuat gambar peta...';
             
             try {
                 const mapElement = document.getElementById('map');
-                // Tunggu sebentar agar tile peta selesai render
-                await new Promise(r => setTimeout(r, 500));
+                await new Promise(r => setTimeout(r, 800));
                 
                 const canvas = await html2canvas(mapElement, {
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#ffffff',
-                    scale: 2 // Higher resolution
+                    scale: 2
                 });
                 
                 currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                document.querySelector('.loading-text').innerText = 'Menyimpan ke VeloRun Cloud...';
-                
-                // Langsung trigger save setelah gambar jadi
                 saveActivity();
             } catch (error) {
-                console.error('Error generating image:', error);
-                alert('Gagal membuat gambar. Mencoba menyimpan tanpa gambar...');
+                console.error('Error:', error);
+                alert('Gagal membuat gambar. Menyimpan tanpa gambar...');
                 currentMapImage = null;
                 saveActivity();
             }
@@ -411,7 +634,7 @@
         async function showHistory() {
             document.getElementById('historyModal').style.display = 'flex';
             const list = document.getElementById('activityList');
-            list.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Memuat data dari Google Sheets...</div>';
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Memuat data...</div>';
             
             try {
                 const userId = getUserId();
@@ -424,29 +647,28 @@
                         <div class="activity-item">
                             <div class="activity-info">
                                 <h4>${act.name}</h4>
-                                <p>📏 ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace} min/km</p>
+                                <p> ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
                                 <p>👟 ${act.equipment} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                             </div>
                         </div>
                     `).join('');
                 } else {
-                    // Fallback ke localStorage jika GAS belum ada data
                     const local = JSON.parse(localStorage.getItem('velorun_pending') || '[]');
                     if (local.length > 0) {
                         list.innerHTML = local.map(act => `
                             <div class="activity-item" style="border-left-color: #ffc107;">
                                 <div class="activity-info">
-                                    <h4>${act.activity.name} (Belum ter-sync)</h4>
+                                    <h4>${act.activity.name} (Belum sync)</h4>
                                     <p>📏 ${act.activity.dist} km | ⏱ ${act.activity.time}</p>
                                 </div>
                             </div>
                         `).join('');
                     } else {
-                        list.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Belum ada aktivitas tersimpan.</div>';
+                        list.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Belum ada aktivitas.</div>';
                     }
                 }
             } catch (error) {
-                list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data. Cek koneksi internet.</div>';
+                list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data.</div>';
             }
         }
 
@@ -456,10 +678,9 @@
             document.getElementById('timeDisplay').innerText = "00:00:00";
             document.getElementById('distDisplay').innerText = "0.00";
             document.getElementById('paceDisplay').innerText = "0:00";
-            if (polyline) {
-                map.removeLayer(polyline);
-                polyline = null;
-            }
+            if (polyline) { map.removeLayer(polyline); polyline = null; }
+            if (currentMarker) { map.removeLayer(currentMarker); currentMarker = null; }
+            if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
             routeCoords = [];
         }
 
@@ -473,10 +694,10 @@
         }
 
         // ==========================================
-        // PWA SERVICE WORKER REGISTRATION
+        // PWA
         // ==========================================
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed:', err));
         }
     </script>
 </body>
