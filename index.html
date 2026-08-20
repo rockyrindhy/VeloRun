@@ -27,42 +27,29 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif; background: #E2E8F0; overflow: hidden; }
         #map { width: 100%; height: 100%; z-index: 1; }
         
-        /* ✅ PERUBAHAN 1: MARKER SOLID ORANGE (TANPA GRADIENT) */
         .current-position-marker {
-            background: #FF6B00; /* Solid orange, bukan gradient */
+            background: #FF6B00;
             border: 3px solid white;
             border-radius: 50%;
             box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.25), 0 4px 12px rgba(0,0,0,0.3);
             animation: pulse 2s infinite;
             position: relative;
         }
-        /* Inner highlight kecil untuk efek glossy tanpa gradient */
         .current-position-marker::before {
-            content: '';
-            position: absolute;
-            top: 15%;
-            left: 20%;
-            width: 30%;
-            height: 30%;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            filter: blur(1px);
+            content: ''; position: absolute; top: 15%; left: 20%; width: 30%; height: 30%;
+            background: rgba(255, 255, 255, 0.5); border-radius: 50%; filter: blur(1px);
         }
         .current-position-marker::after {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%; height: 100%;
-            border-radius: 50%;
-            background: rgba(255, 107, 0, 0.4);
+            content: ''; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); width: 100%; height: 100%;
+            border-radius: 50%; background: rgba(255, 107, 0, 0.4);
             animation: ripple 2s infinite;
         }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         @keyframes ripple { 0% { width: 100%; height: 100%; opacity: 0.6; } 100% { width: 300%; height: 300%; opacity: 0; } }
         
         .start-marker {
-            background: #FF6B00; /* Solid orange juga */
+            background: #FF6B00;
             border: 3px solid white;
             border-radius: 50% 50% 50% 0;
             transform: rotate(-45deg);
@@ -70,15 +57,8 @@
             position: relative;
         }
         .start-marker::before {
-            content: '';
-            position: absolute;
-            top: 20%;
-            left: 25%;
-            width: 25%;
-            height: 25%;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            filter: blur(1px);
+            content: ''; position: absolute; top: 20%; left: 25%; width: 25%; height: 25%;
+            background: rgba(255, 255, 255, 0.5); border-radius: 50%; filter: blur(1px);
         }
 
         .glass-panel {
@@ -137,11 +117,34 @@
         .loading-text, .gps-loading-text { color: var(--text-black); font-size: 18px; font-weight: 800; margin-bottom: 8px; position: relative; z-index: 1; }
         .gps-loading-sub { color: var(--text-grey); font-size: 14px; text-align: center; padding: 0 30px; position: relative; z-index: 1; }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { padding: 28px; border-radius: 28px; width: 100%; max-width: 400px; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
+        /* ✅ PERUBAHAN UTAMA: MODAL YANG RESPONSIVE */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(15, 23, 42, 0.4); 
+            backdrop-filter: blur(8px); 
+            z-index: 2000; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 16px;
+        }
+        
+        /* Modal content dengan max-height agar tidak overflow */
+        .modal-content { 
+            padding: 24px; 
+            border-radius: 28px; 
+            width: 100%; 
+            max-width: 420px;
+            max-height: 90vh; /* ✅ Batas tinggi 90% layar */
+            overflow-y: auto; /* ✅ Scroll jika konten panjang */
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+            position: relative;
+        }
+        
         @keyframes slideUp { from { transform: translateY(40px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
-        .modal-content h3 { margin: 0 0 20px 0; color: var(--text-black); font-size: 22px; font-weight: 800; position: relative; z-index: 1; }
-        .modal-content input, .modal-content select { width: 100%; padding: 16px; margin: 12px 0; background: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,1); border-radius: 16px; font-size: 16px; color: var(--text-black); font-weight: 600; outline: none; transition: all 0.2s; position: relative; z-index: 1; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .modal-content h3 { margin: 0 0 16px 0; color: var(--text-black); font-size: 20px; font-weight: 800; position: relative; z-index: 1; }
+        .modal-content input, .modal-content select { width: 100%; padding: 14px; margin: 10px 0; background: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,1); border-radius: 16px; font-size: 15px; color: var(--text-black); font-weight: 600; outline: none; transition: all 0.2s; position: relative; z-index: 1; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
         .modal-content input:focus, .modal-content select:focus { border-color: var(--primary-orange); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.2), inset 0 2px 4px rgba(0,0,0,0.05); }
         .modal-content select option { background: white; color: var(--text-black); }
         
@@ -149,40 +152,74 @@
             background: rgba(255, 107, 0, 0.08);
             border: 1px solid rgba(255, 107, 0, 0.3);
             border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 16px;
+            padding: 14px;
+            margin-bottom: 14px;
             position: relative;
             z-index: 1;
         }
         .summary-row {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
-            font-size: 14px;
+            padding: 5px 0;
+            font-size: 13px;
             color: var(--text-black);
             font-weight: 600;
         }
         .summary-row span:first-child { color: var(--text-grey); }
         .summary-row span:last-child { color: var(--primary-orange); font-weight: 800; }
 
-        .activity-list { max-height: 55vh; overflow-y: auto; position: relative; z-index: 1; padding-right: 4px; }
-        .activity-item { background: rgba(255,255,255,0.6); padding: 16px; margin: 10px 0; border-radius: 16px; border-left: 4px solid var(--primary-orange); box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1); }
-        .activity-info h4 { margin: 0 0 8px 0; color: var(--text-black); font-size: 16px; font-weight: 800; }
-        .activity-info p { margin: 4px 0; font-size: 13px; color: var(--text-grey); font-weight: 600; }
+        /* ✅ PERUBAHAN UTAMA: PREVIEW IMAGE YANG DI-CROP VISUAL */
+        .image-preview-container {
+            width: 100%;
+            /* Tinggi preview dibatasi agar tidak melebihi layar */
+            height: 200px;
+            border-radius: 20px;
+            overflow: hidden; /* ✅ Potong bagian yang超出 */
+            margin-bottom: 14px;
+            border: 2px solid rgba(255, 107, 0, 0.3);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.5);
+            position: relative;
+            z-index: 1;
+            background: #f1f5f9;
+        }
         
         .image-preview {
             width: 100%;
-            border-radius: 16px;
-            margin-bottom: 16px;
-            border: 2px solid rgba(255, 107, 0, 0.3);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            position: relative;
-            z-index: 1;
+            height: 100%;
+            object-fit: cover; /* ✅ Crop visual: gambar di-zoom & di-crop agar pas container */
+            object-position: center center; /* ✅ Fokus ke tengah gambar (pusat rute) */
+            display: block;
         }
+        
+        /* Label "Preview" kecil di pojok */
+        .preview-label {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 107, 0, 0.9);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .activity-list { max-height: 50vh; overflow-y: auto; position: relative; z-index: 1; padding-right: 4px; }
+        .activity-item { background: rgba(255,255,255,0.6); padding: 14px; margin: 8px 0; border-radius: 16px; border-left: 4px solid var(--primary-orange); box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1); }
+        .activity-info h4 { margin: 0 0 6px 0; color: var(--text-black); font-size: 15px; font-weight: 800; }
+        .activity-info p { margin: 3px 0; font-size: 12px; color: var(--text-grey); font-weight: 600; }
         
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 107, 0, 0.3); border-radius: 10px; }
+        
+        /* Custom scrollbar untuk modal */
+        .modal-content::-webkit-scrollbar { width: 4px; }
+        .modal-content::-webkit-scrollbar-thumb { background: rgba(255, 107, 0, 0.4); border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -263,7 +300,7 @@
                     <span id="summaryTime">00:00:00</span>
                 </div>
                 <div class="summary-row">
-                    <span>📏 Jarak</span>
+                    <span> Jarak</span>
                     <span id="summaryDist">0.00 km</span>
                 </div>
                 <div class="summary-row">
@@ -275,11 +312,11 @@
             <input type="text" id="actName" placeholder="Nama Aktivitas" value="Lari Pagi">
             <select id="actEquipment">
                 <option value="Sepatu Lari">👟 Sepatu Lari</option>
-                <option value="Sepeda">🚴 Sepeda</option>
-                <option value="Jalan Kaki"> Jalan Kaki</option>
+                <option value="Sepeda"> Sepeda</option>
+                <option value="Jalan Kaki">🚶 Jalan Kaki</option>
             </select>
             
-            <div class="btn-group" style="margin-top: 24px;">
+            <div class="btn-group" style="margin-top: 20px;">
                 <button class="btn btn-glass" onclick="backToTracking()">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
                     Kembali
@@ -292,12 +329,16 @@
         </div>
     </div>
 
-    <!-- Modal Hasil -->
+    <!-- Modal Hasil - DENGAN PREVIEW CROP -->
     <div class="modal" id="resultModal">
         <div class="modal-content glass-panel glossy-highlight">
             <h3>✅ Aktivitas Tersimpan!</h3>
             
-            <img id="resultImage" class="image-preview" src="" alt="Peta rute" style="display:none;">
+            <!-- ✅ Preview container dengan tinggi tetap & overflow hidden -->
+            <div class="image-preview-container">
+                <div class="preview-label">Preview</div>
+                <img id="resultImage" class="image-preview" src="" alt="Peta rute">
+            </div>
             
             <div class="activity-summary">
                 <div class="summary-row">
@@ -314,14 +355,14 @@
                 </div>
             </div>
             
-            <div class="btn-group" style="margin-bottom: 12px;">
+            <div class="btn-group" style="margin-bottom: 10px;">
                 <button class="btn btn-primary" onclick="shareActivity()">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M15.75 4.5a3 3 0 1 1 .825 2.066l-8.421 4.679a3.002 3.002 0 0 1 0 1.51l8.421 4.679a3 3 0 1 1-.729 1.31l-8.421-4.678a3 3 0 1 1 0-4.132l8.421-4.679a3 3 0 0 1-.096-.755Z" clip-rule="evenodd" /></svg>
                     Share
                 </button>
                 <button class="btn btn-success" onclick="downloadImage()">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" /></svg>
-                    Simpan Gambar
+                    Simpan
                 </button>
             </div>
             <button class="btn btn-dark" onclick="startNewActivity()" style="width: 100%;">
@@ -334,9 +375,9 @@
     <!-- Modal History -->
     <div class="modal" id="historyModal">
         <div class="modal-content glass-panel glossy-highlight">
-            <h3> Riwayat Aktivitas</h3>
+            <h3>📊 Riwayat Aktivitas</h3>
             <div id="activityList" class="activity-list">Memuat data...</div>
-            <button class="btn btn-dark" onclick="closeHistory()" style="margin-top: 24px; width: 100%;">
+            <button class="btn btn-dark" onclick="closeHistory()" style="margin-top: 20px; width: 100%;">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                 Tutup
             </button>
@@ -473,28 +514,18 @@
         }
 
         function startTracking() {
-            isTracking = true; 
-            isPaused = false; 
-            userInteracted = false;
-            startTime = Date.now(); 
-            elapsedPausedTime = 0; 
-            pauseStartTime = 0;
-            totalDistance = 0; 
-            routeCoords = [];
-            currentMapImage = null;
-            savedActivityData = null;
-            
+            isTracking = true; isPaused = false; userInteracted = false;
+            startTime = Date.now(); elapsedPausedTime = 0; pauseStartTime = 0;
+            totalDistance = 0; routeCoords = [];
+            currentMapImage = null; savedActivityData = null;
             if (polyline) { map.removeLayer(polyline); polyline = null; }
             if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
-            
             timerInterval = setInterval(updateTimer, 1000);
             updateStatus('Berlari...', 'tracking');
-            
             document.getElementById('btnStart').style.display = 'none';
             document.getElementById('btnPause').style.display = 'flex';
             document.getElementById('btnResume').style.display = 'none';
             document.getElementById('btnFinish').style.display = 'flex';
-            
             if (lastPosition) { addStartMarker(lastPosition.lat, lastPosition.lng); forceCenterMap(); }
         }
         
@@ -516,102 +547,57 @@
         }
         
         function finishActivity() {
-            isTracking = false; 
-            isPaused = false;
+            isTracking = false; isPaused = false;
             clearInterval(timerInterval);
             updateStatus('Selesai - Simpan aktivitas', 'ready');
-            
             document.getElementById('btnPause').style.display = 'none';
             document.getElementById('btnResume').style.display = 'none';
             document.getElementById('btnFinish').style.display = 'none';
-            
             document.getElementById('summaryTime').innerText = document.getElementById('timeDisplay').innerText;
             document.getElementById('summaryDist').innerText = document.getElementById('distDisplay').innerText + ' km';
             document.getElementById('summaryPace').innerText = document.getElementById('paceDisplay').innerText;
-            
             document.getElementById('saveModal').style.display = 'flex';
         }
         
         function backToTracking() {
             document.getElementById('saveModal').style.display = 'none';
-            isTracking = true;
-            isPaused = true;
+            isTracking = true; isPaused = true;
             pauseStartTime = Date.now();
             updateStatus('Dijeda', 'paused');
             document.getElementById('btnResume').style.display = 'flex';
             document.getElementById('btnFinish').style.display = 'flex';
         }
 
-        // ==========================================
-        // ✅ PERUBAHAN 2: SMART ZOOM SEBELUM CAPTURE
-        // ==========================================
         async function saveActivity() {
             const name = document.getElementById('actName').value || 'Aktivitas VeloRun';
             const equipment = document.getElementById('actEquipment').value;
             const userId = getUserId();
-            
-            const activityData = { 
-                name, equipment, 
-                time: document.getElementById('timeDisplay').innerText, 
-                dist: document.getElementById('distDisplay').innerText, 
-                pace: document.getElementById('paceDisplay').innerText, 
-                route: routeCoords 
-            };
+            const activityData = { name, equipment, time: document.getElementById('timeDisplay').innerText, dist: document.getElementById('distDisplay').innerText, pace: document.getElementById('paceDisplay').innerText, route: routeCoords };
 
             document.getElementById('saveModal').style.display = 'none';
             document.getElementById('loading').style.display = 'flex';
             document.getElementById('loadingText').innerText = '🗺️ Menyesuaikan peta dengan rute...';
 
             try {
-                // STEP 1: Simpan posisi/zoom user saat ini
-                const savedView = {
-                    center: map.getCenter(),
-                    zoom: map.getZoom()
-                };
+                const savedView = { center: map.getCenter(), zoom: map.getZoom() };
 
-                // STEP 2: Hitung bounds dari seluruh rute
                 if (routeCoords.length > 0) {
                     const bounds = L.latLngBounds(routeCoords);
-                    
-                    // Fit bounds dengan padding agar rute tidak mepet tepi
-                    // Padding [80, 40] = 80px atas-bawah, 40px kiri-kanan
-                    map.fitBounds(bounds, { 
-                        padding: [80, 40],
-                        maxZoom: 16, // Jangan zoom in terlalu dekat
-                        animate: true,
-                        duration: 0.8
-                    });
-                    
-                    // STEP 3: Tunggu sampai peta selesai animasi + tile loading
-                    // Delay lebih lama agar semua tile peta ter-render
+                    map.fitBounds(bounds, { padding: [80, 40], maxZoom: 16, animate: true, duration: 0.8 });
                     await new Promise(resolve => setTimeout(resolve, 2000));
-                    
-                    // Tunggu tambahan sampai semua tile selesai load
                     await waitForTilesToLoad();
                 } else {
-                    // Jika tidak ada rute, tetap tunggu sebentar
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
 
-                // STEP 4: Generate gambar
                 document.getElementById('loadingText').innerText = '📸 Membuat gambar peta...';
-                
                 const mapElement = document.getElementById('map');
-                const canvas = await html2canvas(mapElement, { 
-                    useCORS: true, 
-                    allowTaint: true, 
-                    backgroundColor: '#ffffff', 
-                    scale: 1.5,
-                    logging: false
-                });
-                
+                const canvas = await html2canvas(mapElement, { useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scale: 1.5, logging: false });
                 currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.7));
                 console.log('✅ Gambar dibuat, ukuran:', currentMapImage.size, 'bytes');
 
-                // STEP 5: KEMBALIKAN peta ke posisi semula
                 map.setView(savedView.center, savedView.zoom, { animate: false });
                 
-                // STEP 6: Convert ke base64 & upload
                 let imageData = null;
                 if (currentMapImage) {
                     document.getElementById('loadingText').innerText = '📤 Mengupload gambar...';
@@ -619,63 +605,35 @@
                 }
 
                 document.getElementById('loadingText').innerText = '💾 Menyimpan data...';
-                
-                const payload = { 
-                    userId, 
-                    name: activityData.name, 
-                    equipment: activityData.equipment, 
-                    distance: parseFloat(activityData.dist), 
-                    duration: activityData.time, 
-                    pace: activityData.pace, 
-                    route: activityData.route, 
-                    imageData 
-                };
-
-                const response = await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify(payload) 
-                });
-                
+                const payload = { userId, name: activityData.name, equipment: activityData.equipment, distance: parseFloat(activityData.dist), duration: activityData.time, pace: activityData.pace, route: activityData.route, imageData };
+                const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const responseText = await response.text();
                 const result = JSON.parse(responseText);
 
                 if (result.success) {
                     savedActivityData = { ...activityData, imageUrl: result.imageUrl };
                     showResultModal(activityData);
-                } else { 
-                    throw new Error(result.error || 'Gagal menyimpan'); 
-                }
+                } else { throw new Error(result.error || 'Gagal menyimpan'); }
             } catch (error) {
                 console.error('Error:', error);
                 savedActivityData = activityData;
                 showResultModal(activityData, true);
-            } finally { 
-                document.getElementById('loading').style.display = 'none'; 
-            }
+            } finally { document.getElementById('loading').style.display = 'none'; }
         }
 
-        // ✅ Helper: Tunggu semua tile peta selesai load
         function waitForTilesToLoad() {
             return new Promise((resolve) => {
-                // Cek apakah ada tile yang masih loading
                 const checkTiles = () => {
                     const loadingTiles = document.querySelectorAll('.leaflet-tile-container .leaflet-tile-loading');
-                    if (loadingTiles.length === 0) {
-                        resolve();
-                    } else {
-                        setTimeout(checkTiles, 200);
-                    }
+                    if (loadingTiles.length === 0) resolve();
+                    else setTimeout(checkTiles, 200);
                 };
-                
-                // Timeout max 3 detik (jaga-jaga)
-                setTimeout(() => {
-                    resolve();
-                }, 3000);
-                
+                setTimeout(() => resolve(), 3000);
                 checkTiles();
             });
         }
 
+        // ✅ PERUBAHAN UTAMA: TAMPILKAN PREVIEW DENGAN CROP VISUAL
         function showResultModal(activityData, hasError = false) {
             document.getElementById('resultName').innerText = activityData.name;
             document.getElementById('resultDist').innerText = activityData.dist + ' km';
@@ -683,8 +641,16 @@
             
             const imgEl = document.getElementById('resultImage');
             if (currentMapImage) {
-                imgEl.src = URL.createObjectURL(currentMapImage);
+                // ✅ Buat URL dari blob - gambar UTUH, hanya di-crop secara visual oleh CSS
+                const imageUrl = URL.createObjectURL(currentMapImage);
+                imgEl.src = imageUrl;
                 imgEl.style.display = 'block';
+                
+                // Cleanup URL lama jika ada
+                if (imgEl.dataset.oldUrl) {
+                    URL.revokeObjectURL(imgEl.dataset.oldUrl);
+                }
+                imgEl.dataset.oldUrl = imageUrl;
             } else {
                 imgEl.style.display = 'none';
             }
@@ -700,37 +666,22 @@
 
         async function shareActivity() {
             if (!savedActivityData) return;
-            
             const shareData = {
                 title: savedActivityData.name,
-                text: ` ${savedActivityData.name}\n📏 ${savedActivityData.dist} km\n ${savedActivityData.time}\n⚡ Pace: ${savedActivityData.pace}\n\n#VeloRun`
+                text: `🏃 ${savedActivityData.name}\n📏 ${savedActivityData.dist} km\n⏱ ${savedActivityData.time}\n⚡ Pace: ${savedActivityData.pace}\n\n#VeloRun`
             };
-            
             if (currentMapImage && navigator.canShare) {
                 const file = new File([currentMapImage], 'velorun.jpg', { type: 'image/jpeg' });
-                if (navigator.canShare({ files: [file] })) {
-                    shareData.files = [file];
-                }
+                if (navigator.canShare({ files: [file] })) shareData.files = [file];
             }
-            
             try {
-                if (navigator.share) {
-                    await navigator.share(shareData);
-                } else {
-                    await navigator.clipboard.writeText(shareData.text);
-                    alert('📋 Teks disalin ke clipboard!');
-                }
-            } catch (err) {
-                console.log('Share dibatalkan');
-            }
+                if (navigator.share) await navigator.share(shareData);
+                else { await navigator.clipboard.writeText(shareData.text); alert('📋 Teks disalin!'); }
+            } catch (err) { console.log('Share dibatalkan'); }
         }
 
         function downloadImage() {
-            if (!currentMapImage) {
-                alert('Tidak ada gambar untuk disimpan');
-                return;
-            }
-            
+            if (!currentMapImage) { alert('Tidak ada gambar'); return; }
             const url = URL.createObjectURL(currentMapImage);
             const a = document.createElement('a');
             a.href = url;
@@ -739,31 +690,23 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
-            setTimeout(() => {
-                alert('✅ Gambar disimpan ke Downloads/Galeri!');
-            }, 300);
+            setTimeout(() => alert('✅ Gambar utuh disimpan ke Downloads!'), 300);
         }
 
         function startNewActivity() {
             document.getElementById('resultModal').style.display = 'none';
-            
             routeCoords = [];
             if (polyline) { map.removeLayer(polyline); polyline = null; }
             if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
-            currentMapImage = null;
-            savedActivityData = null;
-            
+            currentMapImage = null; savedActivityData = null;
             document.getElementById('timeDisplay').innerText = "00:00:00";
             document.getElementById('distDisplay').innerText = "0.00";
             document.getElementById('paceDisplay').innerText = "0:00";
-            
             document.getElementById('btnStart').style.display = 'flex';
             document.getElementById('btnStart').disabled = false;
             document.getElementById('btnPause').style.display = 'none';
             document.getElementById('btnResume').style.display = 'none';
             document.getElementById('btnFinish').style.display = 'none';
-            
             updateStatus('GPS Siap - Tekan Mulai', 'ready');
             forceCenterMap();
         }
@@ -784,38 +727,25 @@
                         <div class="activity-item">
                             <div class="activity-info">
                                 <h4>${act.name}</h4>
-                                <p>📏 ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
+                                <p> ${act.distance} km | ⏱ ${act.duration} | ⚡ ${act.pace}</p>
                                 <p>👟 ${act.equipment} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                             </div>
                         </div>
                     `).join('');
-                } else { 
-                    list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-grey);">Belum ada aktivitas.</div>'; 
-                }
-            } catch (error) { 
-                list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data.</div>'; 
-            }
+                } else { list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-grey);">Belum ada aktivitas.</div>'; }
+            } catch (error) { list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data.</div>'; }
         }
 
         function blobToBase64(blob) {
-            return new Promise((resolve, reject) => { 
-                const reader = new FileReader(); 
-                reader.onloadend = () => resolve(reader.result); 
-                reader.onerror = reject; 
-                reader.readAsDataURL(blob); 
-            });
+            return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(blob); });
         }
 
         function initGPS() {
-            if (navigator.geolocation) 
-                watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
-            else 
-                document.getElementById('gpsLoading').querySelector('.gps-loading-text').innerText = 'GPS Tidak Didukung';
+            if (navigator.geolocation) watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+            else document.getElementById('gpsLoading').querySelector('.gps-loading-text').innerText = 'GPS Tidak Didukung';
         }
-        
         window.addEventListener('load', initGPS);
-        if ('serviceWorker' in navigator) 
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed:', err));
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed:', err));
     </script>
 </body>
 </html>
