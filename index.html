@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SportTracker Web</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #map { width: 100%; height: 100%; z-index: 1; }
+        
+        /* UI Overlay */
+        .overlay {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 24px; font-weight: bold; color: #fc4c02; /* Strava Orange */ }
+        .stat-label { font-size: 12px; color: #666; text-transform: uppercase; }
+        
+        .btn {
+            padding: 15px 30px; border: none; border-radius: 30px;
+            font-size: 16px; font-weight: bold; color: white; cursor: pointer;
+            margin: 0 10px; transition: opacity 0.2s;
+        }
+        .btn-start { background: #28a745; }
+        .btn-stop { background: #dc3545; }
+        .btn-share { background: #007bff; display: none; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Modal Save */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 2000;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 20px; border-radius: 15px; width: 80%; max-width: 400px;
+        }
+        .modal-content input, .modal-content select {
+            width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div class="overlay" id="controlPanel">
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="timeDisplay">00:00:00</div>
+                <div class="stat-label">Waktu</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="distDisplay">0.00</div>
+                <div class="stat-label">Jarak (KM)</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="paceDisplay">0:00</div>
+                <div class="stat-label">Pace (min/km)</div>
+            </div>
+        </div>
+        <button class="btn btn-start" id="btnStart" onclick="startTracking()">Mulai Olahraga</button>
+        <button class="btn btn-stop" id="btnStop" onclick="stopTracking()" style="display:none;">Selesai</button>
+        <button class="btn btn-share" id="btnShare" onclick="shareActivity()">Share</button>
+    </div>
+
+    <!-- Modal untuk Custom Nama & Peralatan -->
+    <div class="modal" id="saveModal">
+        <div class="modal-content">
+            <h3>Simpan Aktivitas</h3>
+            <input type="text" id="actName" placeholder="Nama Aktivitas (cth: Lari Pagi)">
+            <select id="actEquipment">
+                <option value="Sepatu Lari">Sepatu Lari</option>
+                <option value="Sepeda">Sepeda</option>
+                <option value="Tanpa Alat">Tanpa Alat (Jalan Kaki)</option>
+            </select>
+            <button class="btn btn-start" onclick="saveAndShare()">Simpan & Bagikan</button>
+            <button class="btn btn-stop" onclick="closeModal()">Batal</button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // --- INISIALISASI PETA ---
+        const map = L.map('map').setView([-6.2088, 106.8456], 13); // Default Jakarta
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let polyline = null;
+        let watchId = null;
+        let isTracking = false;
+        let isPaused = false;
+        
+        // Variables untuk Tracking
+        let startTime = 0;
+        let elapsedPausedTime = 0;
+        let timerInterval = null;
+        let totalDistance = 0; // dalam meter
+        let lastPosition = null;
+        let routeCoords = [];
+
+        // --- FUNGSI HAVERSINE (HITUNG JARAK 2 TITIK GPS) ---
+        function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Radius bumi dalam meter
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // --- LOGIKA AUTO-PAUSE ---
+        function checkAutoPause(currentPos) {
+            if (!lastPosition) return false;
+            
+            const dist = getDistanceFromLatLonInM(lastPosition.lat, lastPosition.lng, currentPos.lat, currentPos.lng);
+            const timeDiff = (Date.now() - lastPosition.timestamp) / 1000; // detik
+            
+            // Jika waktu terlalu singkat (GPS jitter), abaikan
+            if (timeDiff < 1) return true; 
+            
+            const speedMs = dist / timeDiff; // meter per detik
+            const speedKmh = speedMs * 3.6;
+
+            // Threshold: Jika kecepatan < 1.5 km/jam, anggap berhenti (Auto Pause)
+            return speedKmh < 1.5; 
+        }
+
+        // --- UPDATE TIMER ---
+        function updateTimer() {
+            if (isPaused) return;
+            const now = Date.now();
+            const elapsed = now - startTime - elapsedPausedTime;
+            
+            const hrs = Math.floor(elapsed / 3600000);
+            const mins = Math.floor((elapsed % 3600000) / 60000);
+            const secs = Math.floor((elapsed % 60000) / 1000);
+            
+            document.getElementById('timeDisplay').innerText = 
+                `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+            
+            updatePace(elapsed);
+        }
+
+        function updatePace(elapsedMs) {
+            if (totalDistance < 10) {
+                document.getElementById('paceDisplay').innerText = "0:00";
+                return;
+            }
+            const distKm = totalDistance / 1000;
+            const paceMsPerKm = elapsedMs / distKm;
+            const paceMins = Math.floor(paceMsPerKm / 60000);
+            const paceSecs = Math.floor((paceMsPerKm % 60000) / 1000);
+            document.getElementById('paceDisplay').innerText = `${paceMins}:${String(paceSecs).padStart(2,'0')}`;
+        }
+
+        // --- GPS WATCHER ---
+        function onGeoSuccess(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+
+            // Filter GPS yang tidak akurat (drift)
+            if (accuracy > 20) return; 
+
+            const currentPos = { lat, lng, timestamp: Date.now() };
+
+            if (isTracking) {
+                // Logika Auto-Pause
+                const shouldPause = checkAutoPause(currentPos);
+                if (shouldPause && !isPaused) {
+                    isPaused = true;
+                    console.log("Auto-Pause: Berhenti bergerak");
+                } else if (!shouldPause && isPaused) {
+                    isPaused = false;
+                    console.log("Auto-Resume: Bergerak kembali");
+                }
+
+                // Hitung Jarak
+                if (lastPosition && !isPaused) {
+                    const dist = getDistanceFromLatLonInM(lastPosition.lat, lastPosition.lng, lat, lng);
+                    // Filter loncatan GPS (jika > 50 meter dalam 1 detik, itu error GPS)
+                    if (dist < 50) {
+                        totalDistance += dist;
+                        routeCoords.push([lat, lng]);
+                        polyline.addLatLng([lat, lng]);
+                    }
+                } else if (!lastPosition) {
+                    routeCoords.push([lat, lng]);
+                    polyline = L.polyline(routeCoords, {color: '#fc4c02', weight: 5}).addTo(map);
+                }
+
+                document.getElementById('distDisplay').innerText = (totalDistance / 1000).toFixed(2);
+                map.panTo([lat, lng]);
+                lastPosition = currentPos;
+            }
+        }
+
+        function onGeoError(error) {
+            console.error("GPS Error:", error);
+            alert("Gagal mengakses GPS. Pastikan izin lokasi diaktifkan.");
+        }
+
+        // --- KONTROL APLIKASI ---
+        function startTracking() {
+            isTracking = true;
+            isPaused = false;
+            startTime = Date.now();
+            elapsedPausedTime = 0;
+            totalDistance = 0;
+            routeCoords = [];
+            lastPosition = null;
+
+            timerInterval = setInterval(updateTimer, 1000);
+            
+            watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 5000
+            });
+
+            document.getElementById('btnStart').style.display = 'none';
+            document.getElementById('btnStop').style.display = 'inline-block';
+            document.getElementById('btnShare').style.display = 'none';
+        }
+
+        function stopTracking() {
+            isTracking = false;
+            clearInterval(timerInterval);
+            navigator.geolocation.clearWatch(watchId);
+
+            document.getElementById('btnStop').style.display = 'none';
+            document.getElementById('btnShare').style.display = 'inline-block';
+            
+            // Tampilkan modal save
+            document.getElementById('saveModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('saveModal').style.display = 'none';
+        }
+
+        // --- SAVE & SHARE ---
+        function saveAndShare() {
+            const name = document.getElementById('actName').value || "Aktivitas Tanpa Judul";
+            const equipment = document.getElementById('actEquipment').value;
+            const time = document.getElementById('timeDisplay').innerText;
+            const dist = document.getElementById('distDisplay').innerText;
+            const pace = document.getElementById('paceDisplay').innerText;
+
+            // 1. Simpan ke LocalStorage (Database Lokal)
+            const activity = {
+                id: Date.now(),
+                name, equipment, time, dist, pace,
+                route: routeCoords,
+                date: new Date().toLocaleDateString()
+            };
+            
+            let history = JSON.parse(localStorage.getItem('sportHistory') || '[]');
+            history.unshift(activity);
+            localStorage.setItem('sportHistory', JSON.stringify(history));
+
+            // 2. Share ke Media Sosial (Web Share API)
+            const shareText = `🏃 ${name}\n📏 Jarak: ${dist} km\n⏱ Waktu: ${time}\n⚡ Pace: ${pace} min/km\n👟 Peralatan: ${equipment}\n\n#SportTrackerWeb`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: name,
+                    text: shareText,
+                    // url: window.location.href // Bisa diganti link ke web Anda
+                }).catch(console.error);
+            } else {
+                // Fallback jika Web Share API tidak didukung (biasanya di Desktop)
+                alert("Aktivitas Tersimpan!\n\n" + shareText);
+            }
+
+            closeModal();
+            resetUI();
+        }
+
+        function resetUI() {
+            document.getElementById('btnStart').style.display = 'inline-block';
+            document.getElementById('btnShare').style.display = 'none';
+            document.getElementById('timeDisplay').innerText = "00:00:00";
+            document.getElementById('distDisplay').innerText = "0.00";
+            document.getElementById('paceDisplay').innerText = "0:00";
+            if (polyline) map.removeLayer(polyline);
+        }
+    </script>
+</body>
+</html>
