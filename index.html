@@ -1455,8 +1455,8 @@
                         return `<div class="activity-item" onclick="showActivityDetail(window._activities[${index}])">
                             <div class="activity-info">
                                 <h4>${act.name || 'Tanpa Nama'}</h4>
-                                <p> ${normalizedDistance} km | ⏱ ${normalizedDuration} | ⚡ ${normalizedPace}</p>
-                                <p>👟 ${act.equipment || '-'} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                <p> ${normalizedDistance} km | ${normalizedDuration} | ${normalizedPace}</p>
+                                <p> ${act.equipment || '-'} | ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                                 <p style="font-size:10px; color:${statusColor};">${statusIcon} ${statusText}</p>
                             </div>
                         </div>`;
