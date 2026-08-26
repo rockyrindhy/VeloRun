@@ -248,7 +248,6 @@
             margin-bottom: 16px;
         }
         
-        /* ✅ PERBAIKAN: Alignment detail-row */
         .detail-row {
             display: flex; 
             justify-content: space-between; 
@@ -640,78 +639,129 @@
         let lastTrackedPosition = null;
         let lastPauseCheckTime = 0;
 
-        // ✅ FUNGSI NORMALISASI FORMAT DATA
+        // ✅ FUNGSI NORMALISASI FORMAT DATA - DIPERKUAT
         function normalizeTime(timeStr) {
-            // Pastikan format HH:MM:SS
             if (!timeStr) return '00:00:00';
+            timeStr = String(timeStr).trim();
+            
+            // ✅ Handle format ISO Date dari Google Sheets (1899-12-29T...)
+            if (timeStr.includes('1899-12-29') || timeStr.includes('1899-12-30')) {
+                try {
+                    const date = new Date(timeStr);
+                    if (!isNaN(date.getTime())) {
+                        const hrs = String(date.getUTCHours()).padStart(2, '0');
+                        const mins = String(date.getUTCMinutes()).padStart(2, '0');
+                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
+                        return `${hrs}:${mins}:${secs}`;
+                    }
+                } catch (e) {}
+            }
+            
+            // Handle format ISO Date umum
+            if (timeStr.includes('T') && timeStr.includes('Z')) {
+                try {
+                    const date = new Date(timeStr);
+                    if (!isNaN(date.getTime())) {
+                        const hrs = String(date.getUTCHours()).padStart(2, '0');
+                        const mins = String(date.getUTCMinutes()).padStart(2, '0');
+                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
+                        return `${hrs}:${mins}:${secs}`;
+                    }
+                } catch (e) {}
+            }
+            
+            // Handle format HH:MM:SS normal
             const parts = timeStr.split(':');
             if (parts.length === 3) {
-                return `${String(parts[0]).padStart(2, '0')}:${String(parts[1]).padStart(2, '0')}:${String(parts[2]).padStart(2, '0')}`;
+                const h = parseInt(parts[0]) || 0;
+                const m = parseInt(parts[1]) || 0;
+                const s = parseInt(parts[2]) || 0;
+                return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
             }
-            return timeStr;
+            
+            // Handle format MM:SS
+            if (parts.length === 2) {
+                const m = parseInt(parts[0]) || 0;
+                const s = parseInt(parts[1]) || 0;
+                return `00:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+            
+            return '00:00:00';
         }
 
         function normalizePace(paceStr) {
-            // Pastikan format M:SS
             if (!paceStr) return '0:00';
+            paceStr = String(paceStr).trim();
+            
+            // ✅ Handle format ISO Date dari Google Sheets
+            if (paceStr.includes('1899-12-29') || paceStr.includes('1899-12-30')) {
+                try {
+                    const date = new Date(paceStr);
+                    if (!isNaN(date.getTime())) {
+                        const mins = date.getUTCMinutes();
+                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
+                        return `${mins}:${secs}`;
+                    }
+                } catch (e) {}
+            }
+            
+            // Handle format ISO Date umum
+            if (paceStr.includes('T') && paceStr.includes('Z')) {
+                try {
+                    const date = new Date(paceStr);
+                    if (!isNaN(date.getTime())) {
+                        const mins = date.getUTCMinutes();
+                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
+                        return `${mins}:${secs}`;
+                    }
+                } catch (e) {}
+            }
+            
+            // Handle format M:SS normal
             const parts = paceStr.split(':');
             if (parts.length === 2) {
-                return `${parts[0]}:${String(parts[1]).padStart(2, '0')}`;
+                const m = parseInt(parts[0]) || 0;
+                const s = parseInt(parts[1]) || 0;
+                return `${m}:${String(s).padStart(2, '0')}`;
             }
-            return paceStr;
+            
+            // Handle format MM:SS (anggap pace)
+            if (parts.length === 3) {
+                const m = parseInt(parts[1]) || 0;
+                const s = parseInt(parts[2]) || 0;
+                return `${m}:${String(s).padStart(2, '0')}`;
+            }
+            
+            return '0:00';
         }
 
         function normalizeDistance(distStr) {
-            // Pastikan 2 desimal
             if (!distStr) return '0.00';
+            distStr = String(distStr).trim();
+            if (distStr.startsWith("'")) distStr = distStr.substring(1);
             const num = parseFloat(distStr);
             if (isNaN(num)) return '0.00';
             return num.toFixed(2);
         }
 
         function normalizeDuration(durationStr) {
-            // Normalisasi durasi dari Google Sheet (bisa dalam berbagai format)
             if (!durationStr) return '00:00:00';
-            
-            // Jika sudah dalam format HH:MM:SS
-            if (typeof durationStr === 'string' && durationStr.includes(':')) {
-                return normalizeTime(durationStr);
-            }
-            
-            // Jika dalam format desimal jam (dari Google Sheet)
-            if (typeof durationStr === 'number' || !isNaN(parseFloat(durationStr))) {
-                const totalSeconds = Math.floor(parseFloat(durationStr) * 3600);
-                const hrs = Math.floor(totalSeconds / 3600);
-                const mins = Math.floor((totalSeconds % 3600) / 60);
-                const secs = totalSeconds % 60;
-                return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-            }
-            
-            return durationStr;
+            durationStr = String(durationStr).trim();
+            if (durationStr.startsWith("'")) durationStr = durationStr.substring(1);
+            return normalizeTime(durationStr);
         }
 
         function normalizePaceFromSheet(paceStr) {
-            // Normalisasi pace dari Google Sheet
             if (!paceStr) return '0:00';
-            
-            if (typeof paceStr === 'string' && paceStr.includes(':')) {
-                return normalizePace(paceStr);
-            }
-            
-            // Jika dalam format desimal menit
-            if (typeof paceStr === 'number' || !isNaN(parseFloat(paceStr))) {
-                const totalSeconds = Math.floor(parseFloat(paceStr) * 60);
-                const mins = Math.floor(totalSeconds / 60);
-                const secs = totalSeconds % 60;
-                return `${mins}:${String(secs).padStart(2, '0')}`;
-            }
-            
-            return paceStr;
+            paceStr = String(paceStr).trim();
+            if (paceStr.startsWith("'")) paceStr = paceStr.substring(1);
+            return normalizePace(paceStr);
         }
 
         function normalizeDistanceFromSheet(distStr) {
-            // Normalisasi jarak dari Google Sheet
             if (!distStr) return '0.00';
+            distStr = String(distStr).trim();
+            if (distStr.startsWith("'")) distStr = distStr.substring(1);
             const num = parseFloat(distStr);
             if (isNaN(num)) return '0.00';
             return num.toFixed(2);
@@ -990,7 +1040,6 @@
             document.getElementById('btnResume').style.display = 'none';
             document.getElementById('btnFinish').style.display = 'none';
             
-            // ✅ Normalisasi data sebelum ditampilkan di modal
             const normalizedTime = normalizeTime(document.getElementById('timeDisplay').innerText);
             const normalizedDist = normalizeDistance(document.getElementById('distDisplay').innerText);
             const normalizedPace = normalizePace(document.getElementById('paceDisplay').innerText);
@@ -1016,7 +1065,6 @@
             const equipment = document.getElementById('actEquipment').value;
             const userId = getUserId();
             
-            // ✅ Normalisasi data sebelum dikirim ke Google Sheet
             const normalizedTime = normalizeTime(document.getElementById('timeDisplay').innerText);
             const normalizedDist = normalizeDistance(document.getElementById('distDisplay').innerText);
             const normalizedPace = normalizePace(document.getElementById('paceDisplay').innerText);
@@ -1240,7 +1288,7 @@
             console.log('=== DETAIL AKTIVITAS ===');
             console.log('Activity:', activity);
             
-            // ✅ Normalisasi data dari Google Sheet sebelum ditampilkan
+            // ✅ Normalisasi data dari Google Sheet
             const normalizedDuration = normalizeDuration(activity.duration);
             const normalizedPace = normalizePaceFromSheet(activity.pace);
             const normalizedDistance = normalizeDistanceFromSheet(activity.distance);
@@ -1310,7 +1358,6 @@
                         const statusColor = hasImage ? '#10b981' : '#ef4444';
                         const statusText = hasImage ? 'Ada gambar' : 'Tidak ada gambar';
                         
-                        // ✅ Normalisasi data untuk tampilan di list
                         const normalizedDuration = normalizeDuration(act.duration);
                         const normalizedPace = normalizePaceFromSheet(act.pace);
                         const normalizedDistance = normalizeDistanceFromSheet(act.distance);
@@ -1318,7 +1365,7 @@
                         return `<div class="activity-item" onclick="showActivityDetail(window._activities[${index}])">
                             <div class="activity-info">
                                 <h4>${act.name || 'Tanpa Nama'}</h4>
-                                <p>📏 ${normalizedDistance} km | ⏱ ${normalizedDuration} | ⚡ ${normalizedPace}</p>
+                                <p>📏 ${normalizedDistance} km |  ${normalizedDuration} | ⚡ ${normalizedPace}</p>
                                 <p>👟 ${act.equipment || '-'} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                                 <p style="font-size:10px; color:${statusColor};">${statusIcon} ${statusText}</p>
                             </div>
