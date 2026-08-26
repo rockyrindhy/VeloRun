@@ -248,13 +248,29 @@
             margin-bottom: 16px;
         }
         
+        /* ✅ PERBAIKAN: Alignment detail-row */
         .detail-row {
-            display: flex; justify-content: space-between; padding: 8px 0;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 8px 0;
             border-bottom: 1px solid rgba(255, 107, 0, 0.1);
         }
         .detail-row:last-child { border-bottom: none; }
-        .detail-row span:first-child { color: var(--text-grey); font-weight: 600; font-size: 13px; }
-        .detail-row span:last-child { color: var(--text-black); font-weight: 700; font-size: 14px; }
+        .detail-row span:first-child { 
+            color: var(--text-grey); 
+            font-weight: 600; 
+            font-size: 13px;
+            text-align: left;
+            flex: 1;
+        }
+        .detail-row span:last-child { 
+            color: var(--text-black); 
+            font-weight: 700; 
+            font-size: 14px;
+            text-align: right;
+            flex: 1;
+        }
         
         .leaflet-control-zoom {
             position: absolute !important;
@@ -624,6 +640,83 @@
         let lastTrackedPosition = null;
         let lastPauseCheckTime = 0;
 
+        // ✅ FUNGSI NORMALISASI FORMAT DATA
+        function normalizeTime(timeStr) {
+            // Pastikan format HH:MM:SS
+            if (!timeStr) return '00:00:00';
+            const parts = timeStr.split(':');
+            if (parts.length === 3) {
+                return `${String(parts[0]).padStart(2, '0')}:${String(parts[1]).padStart(2, '0')}:${String(parts[2]).padStart(2, '0')}`;
+            }
+            return timeStr;
+        }
+
+        function normalizePace(paceStr) {
+            // Pastikan format M:SS
+            if (!paceStr) return '0:00';
+            const parts = paceStr.split(':');
+            if (parts.length === 2) {
+                return `${parts[0]}:${String(parts[1]).padStart(2, '0')}`;
+            }
+            return paceStr;
+        }
+
+        function normalizeDistance(distStr) {
+            // Pastikan 2 desimal
+            if (!distStr) return '0.00';
+            const num = parseFloat(distStr);
+            if (isNaN(num)) return '0.00';
+            return num.toFixed(2);
+        }
+
+        function normalizeDuration(durationStr) {
+            // Normalisasi durasi dari Google Sheet (bisa dalam berbagai format)
+            if (!durationStr) return '00:00:00';
+            
+            // Jika sudah dalam format HH:MM:SS
+            if (typeof durationStr === 'string' && durationStr.includes(':')) {
+                return normalizeTime(durationStr);
+            }
+            
+            // Jika dalam format desimal jam (dari Google Sheet)
+            if (typeof durationStr === 'number' || !isNaN(parseFloat(durationStr))) {
+                const totalSeconds = Math.floor(parseFloat(durationStr) * 3600);
+                const hrs = Math.floor(totalSeconds / 3600);
+                const mins = Math.floor((totalSeconds % 3600) / 60);
+                const secs = totalSeconds % 60;
+                return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+            
+            return durationStr;
+        }
+
+        function normalizePaceFromSheet(paceStr) {
+            // Normalisasi pace dari Google Sheet
+            if (!paceStr) return '0:00';
+            
+            if (typeof paceStr === 'string' && paceStr.includes(':')) {
+                return normalizePace(paceStr);
+            }
+            
+            // Jika dalam format desimal menit
+            if (typeof paceStr === 'number' || !isNaN(parseFloat(paceStr))) {
+                const totalSeconds = Math.floor(parseFloat(paceStr) * 60);
+                const mins = Math.floor(totalSeconds / 60);
+                const secs = totalSeconds % 60;
+                return `${mins}:${String(secs).padStart(2, '0')}`;
+            }
+            
+            return paceStr;
+        }
+
+        function normalizeDistanceFromSheet(distStr) {
+            // Normalisasi jarak dari Google Sheet
+            if (!distStr) return '0.00';
+            const num = parseFloat(distStr);
+            if (isNaN(num)) return '0.00';
+            return num.toFixed(2);
+        }
+
         function addPreviewWatermark(containerId) {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -655,9 +748,9 @@
             infoBox.innerHTML = `
                 <div class="activity-info-row"><span class="activity-info-label">Aktivitas</span><span class="activity-info-value">${activityData.name}</span></div>
                 <div class="activity-info-row"><span class="activity-info-label">Tipe</span><span class="activity-info-value">${activityData.equipment}</span></div>
-                <div class="activity-info-row"><span class="activity-info-label">Jarak</span><span class="activity-info-value">${activityData.dist} km</span></div>
-                <div class="activity-info-row"><span class="activity-info-label">Waktu</span><span class="activity-info-value">${activityData.time}</span></div>
-                <div class="activity-info-row"><span class="activity-info-label">Pace</span><span class="activity-info-value">${activityData.pace}/km</span></div>
+                <div class="activity-info-row"><span class="activity-info-label">Jarak</span><span class="activity-info-value">${normalizeDistance(activityData.dist)} km</span></div>
+                <div class="activity-info-row"><span class="activity-info-label">Waktu</span><span class="activity-info-value">${normalizeTime(activityData.time)}</span></div>
+                <div class="activity-info-row"><span class="activity-info-label">Pace</span><span class="activity-info-value">${normalizePace(activityData.pace)}/km</span></div>
                 <div class="activity-info-row"><span class="activity-info-label">Tanggal</span><span class="activity-info-value">${dateStr}</span></div>
             `;
             mapElement.appendChild(infoBox);
@@ -678,35 +771,19 @@
             }
         }
 
-        // ✅ TITIK START - Lingkaran hijau dengan border putih
         function createStartIcon() { 
             return L.divIcon({ 
                 className: 'start-point-marker',
-                html: `<div style="
-                    width: 18px; 
-                    height: 18px; 
-                    background: #22C55E; 
-                    border: 3px solid white; 
-                    border-radius: 50%; 
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                "></div>`,
+                html: `<div style="width: 18px; height: 18px; background: #22C55E; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
                 iconSize: [18, 18], 
                 iconAnchor: [9, 9] 
             }); 
         }
 
-        // ✅ TITIK FINISH - Lingkaran merah dengan border putih
         function createFinishIcon() { 
             return L.divIcon({ 
                 className: 'finish-point-marker',
-                html: `<div style="
-                    width: 18px; 
-                    height: 18px; 
-                    background: #EF4444; 
-                    border: 3px solid white; 
-                    border-radius: 50%; 
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                "></div>`,
+                html: `<div style="width: 18px; height: 18px; background: #EF4444; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
                 iconSize: [18, 18], 
                 iconAnchor: [9, 9] 
             }); 
@@ -720,7 +797,6 @@
             startMarker = L.marker([lat, lng], { icon: createStartIcon(), title: 'Titik Mulai', zIndexOffset: 800 }).addTo(map); 
         }
 
-        // ✅ Fungsi baru untuk menambahkan marker finish
         function addFinishMarker(lat, lng) {
             if (finishMarker) map.removeLayer(finishMarker);
             finishMarker = L.marker([lat, lng], { icon: createFinishIcon(), title: 'Titik Selesai', zIndexOffset: 800 }).addTo(map);
@@ -906,7 +982,6 @@
             updateStatus('Selesai - Simpan aktivitas', 'ready');
             updateMarkerColor(false);
             
-            // ✅ Tambahkan marker finish di posisi terakhir
             if (lastPosition) {
                 addFinishMarker(lastPosition.lat, lastPosition.lng);
             }
@@ -914,9 +989,15 @@
             document.getElementById('btnPause').style.display = 'none';
             document.getElementById('btnResume').style.display = 'none';
             document.getElementById('btnFinish').style.display = 'none';
-            document.getElementById('summaryTime').innerText = document.getElementById('timeDisplay').innerText;
-            document.getElementById('summaryDist').innerText = document.getElementById('distDisplay').innerText + ' km';
-            document.getElementById('summaryPace').innerText = document.getElementById('paceDisplay').innerText;
+            
+            // ✅ Normalisasi data sebelum ditampilkan di modal
+            const normalizedTime = normalizeTime(document.getElementById('timeDisplay').innerText);
+            const normalizedDist = normalizeDistance(document.getElementById('distDisplay').innerText);
+            const normalizedPace = normalizePace(document.getElementById('paceDisplay').innerText);
+            
+            document.getElementById('summaryTime').innerText = normalizedTime;
+            document.getElementById('summaryDist').innerText = normalizedDist + ' km';
+            document.getElementById('summaryPace').innerText = normalizedPace;
             document.getElementById('saveModal').style.display = 'flex';
         }
         
@@ -934,7 +1015,20 @@
             const name = document.getElementById('actName').value || 'Aktivitas VeloRun';
             const equipment = document.getElementById('actEquipment').value;
             const userId = getUserId();
-            const activityData = { name, equipment, time: document.getElementById('timeDisplay').innerText, dist: document.getElementById('distDisplay').innerText, pace: document.getElementById('paceDisplay').innerText, route: routeCoords };
+            
+            // ✅ Normalisasi data sebelum dikirim ke Google Sheet
+            const normalizedTime = normalizeTime(document.getElementById('timeDisplay').innerText);
+            const normalizedDist = normalizeDistance(document.getElementById('distDisplay').innerText);
+            const normalizedPace = normalizePace(document.getElementById('paceDisplay').innerText);
+            
+            const activityData = { 
+                name, 
+                equipment, 
+                time: normalizedTime, 
+                dist: normalizedDist, 
+                pace: normalizedPace, 
+                route: routeCoords 
+            };
 
             document.getElementById('saveModal').style.display = 'none';
             document.getElementById('loading').style.display = 'flex';
@@ -969,7 +1063,16 @@
                 }
 
                 document.getElementById('loadingText').innerText = 'Menyimpan...';
-                const payload = { userId, name: activityData.name, equipment: activityData.equipment, distance: parseFloat(activityData.dist), duration: activityData.time, pace: activityData.pace, route: activityData.route, imageData };
+                const payload = { 
+                    userId, 
+                    name: activityData.name, 
+                    equipment: activityData.equipment, 
+                    distance: parseFloat(activityData.dist), 
+                    duration: activityData.time, 
+                    pace: activityData.pace, 
+                    route: activityData.route, 
+                    imageData 
+                };
                 const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const responseText = await response.text();
                 const result = JSON.parse(responseText);
@@ -1134,11 +1237,19 @@
         }
 
         function showActivityDetail(activity) {
+            console.log('=== DETAIL AKTIVITAS ===');
+            console.log('Activity:', activity);
+            
+            // ✅ Normalisasi data dari Google Sheet sebelum ditampilkan
+            const normalizedDuration = normalizeDuration(activity.duration);
+            const normalizedPace = normalizePaceFromSheet(activity.pace);
+            const normalizedDistance = normalizeDistanceFromSheet(activity.distance);
+            
             document.getElementById('detailName').innerText = activity.name || '-';
             document.getElementById('detailEquipment').innerText = activity.equipment || '-';
-            document.getElementById('detailDistance').innerText = (activity.distance || 0) + ' km';
-            document.getElementById('detailDuration').innerText = activity.duration || '-';
-            document.getElementById('detailPace').innerText = activity.pace || '-';
+            document.getElementById('detailDistance').innerText = normalizedDistance + ' km';
+            document.getElementById('detailDuration').innerText = normalizedDuration;
+            document.getElementById('detailPace').innerText = normalizedPace;
             
             const date = new Date(activity.timestamp);
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -1187,6 +1298,8 @@
                 const userId = getUserId();
                 const response = await fetch(`${GAS_URL}?action=getActivities&userId=${userId}`);
                 const responseText = await response.text();
+                console.log('=== RESPONSE DARI SERVER ===');
+                console.log(responseText);
                 const result = JSON.parse(responseText);
                 
                 if (result.success && result.activities.length > 0) {
@@ -1196,11 +1309,17 @@
                         const statusIcon = hasImage ? '✓' : '✗';
                         const statusColor = hasImage ? '#10b981' : '#ef4444';
                         const statusText = hasImage ? 'Ada gambar' : 'Tidak ada gambar';
+                        
+                        // ✅ Normalisasi data untuk tampilan di list
+                        const normalizedDuration = normalizeDuration(act.duration);
+                        const normalizedPace = normalizePaceFromSheet(act.pace);
+                        const normalizedDistance = normalizeDistanceFromSheet(act.distance);
+                        
                         return `<div class="activity-item" onclick="showActivityDetail(window._activities[${index}])">
                             <div class="activity-info">
                                 <h4>${act.name || 'Tanpa Nama'}</h4>
-                                <p> ${act.distance || 0} km |  ${act.duration || '-'} |  ${act.pace || '-'}</p>
-                                <p> ${act.equipment || '-'} |  ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                <p>📏 ${normalizedDistance} km | ⏱ ${normalizedDuration} | ⚡ ${normalizedPace}</p>
+                                <p>👟 ${act.equipment || '-'} | 📅 ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                                 <p style="font-size:10px; color:${statusColor};">${statusIcon} ${statusText}</p>
                             </div>
                         </div>`;
