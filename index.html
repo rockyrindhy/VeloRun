@@ -629,8 +629,9 @@
         let savedActivityData = null;
         let turnMarkers = [];
         
-        // ✅ PERBAIKAN: Tambahkan variabel khusus untuk melacak posisi terakhir saat AKTIF merekam
+        // ✅ PERBAIKAN: Variabel untuk melacak posisi terakhir SAAT AKTIF merekam
         let lastTrackedPosition = null;
+        let lastPauseCheckTime = 0;
 
         function addPreviewWatermark(containerId) {
             const container = document.getElementById(containerId);
@@ -731,16 +732,21 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
         }
 
-        // ✅ PERBAIKAN: Fungsi checkAutoPause yang benar dengan referensi posisi tracking
-        function checkAutoPause(currentPos, refPos) {
-            if (!refPos) return false;
-            const dist = getDistanceFromLatLonInM(refPos.lat, refPos.lng, currentPos.lat, currentPos.lng);
-            const timeDiff = (Date.now() - refPos.timestamp) / 1000;
+        // ✅ PERBAIKAN: Fungsi checkAutoPause dengan debounce dan referensi posisi yang benar
+        function checkAutoPause(currentPos) {
+            const now = Date.now();
+            if (now - lastPauseCheckTime < 2000) return isPaused; // Debounce 2 detik
             
-            // Jika waktu terlalu singkat, pertahankan status saat ini (mencegah toggle erratic)
-            if (timeDiff < 1) return isPaused; 
+            if (!lastTrackedPosition) return false;
+            
+            const dist = getDistanceFromLatLonInM(lastTrackedPosition.lat, lastTrackedPosition.lng, currentPos.lat, currentPos.lng);
+            const timeDiff = (currentPos.timestamp - lastTrackedPosition.timestamp) / 1000;
+            
+            if (timeDiff < 1 || timeDiff > 300) return isPaused;
             
             const speedKmh = (dist / timeDiff) * 3.6;
+            lastPauseCheckTime = now;
+            
             return speedKmh < AUTO_PAUSE_SPEED;
         }
 
@@ -768,6 +774,7 @@
             const { latitude: lat, longitude: lng, accuracy } = position.coords;
             document.getElementById('accuracyInfo').innerText = `Akurasi: ${Math.round(accuracy)}m`;
             if (accuracy > MIN_ACCURACY) return;
+            
             const currentPos = { lat, lng, timestamp: Date.now() };
             updateCurrentMarker(lat, lng);
 
@@ -778,24 +785,31 @@
                 updateStatus('GPS Siap - Tekan Mulai', 'ready');
                 document.getElementById('btnStart').disabled = false;
                 lastPosition = currentPos;
-                lastTrackedPosition = currentPos; // ✅ Inisialisasi
+                lastTrackedPosition = currentPos;
                 return;
             }
             
             lastPosition = currentPos;
 
             if (isTracking) {
-                // ✅ PERBAIKAN: Cek auto pause/resume berdasarkan lastTrackedPosition
-                const shouldPause = checkAutoPause(currentPos, lastTrackedPosition);
+                const shouldPause = checkAutoPause(currentPos);
                 
                 if (shouldPause && !isPaused) {
                     togglePause(true); // Auto pause
                 } else if (!shouldPause && isPaused) {
-                    togglePause(false); // ✅ Auto resume (ini yang sebelumnya hilang!)
+                    // ✅ Auto resume: Hanya resume jika kecepatan > 2.0 km/j (lebih tinggi dari threshold pause)
+                    const dist = getDistanceFromLatLonInM(lastTrackedPosition.lat, lastTrackedPosition.lng, currentPos.lat, currentPos.lng);
+                    const timeDiff = (currentPos.timestamp - lastTrackedPosition.timestamp) / 1000;
+                    const speedKmh = (dist / timeDiff) * 3.6;
+                    
+                    if (speedKmh > 2.0) {
+                        togglePause(false);
+                    }
                 }
 
                 if (!isPaused) {
-                    lastTrackedPosition = currentPos; // ✅ Hanya update saat aktif merekam
+                    // ✅ Update lastTrackedPosition HANYA saat aktif merekam
+                    lastTrackedPosition = currentPos;
                     
                     if (routeCoords.length > 0) {
                         const prevPos = routeCoords[routeCoords.length - 1];
@@ -803,8 +817,11 @@
                         if (dist < MAX_JUMP) {
                             totalDistance += dist; 
                             routeCoords.push([lat, lng]);
-                            if (!polyline) polyline = L.polyline(routeCoords, { color: '#FF6B00', weight: 6, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
-                            else polyline.addLatLng([lat, lng]);
+                            if (!polyline) {
+                                polyline = L.polyline(routeCoords, { color: '#FF6B00', weight: 6, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+                            } else {
+                                polyline.addLatLng([lat, lng]);
+                            }
                             checkForTurn();
                         }
                     } else {
@@ -827,18 +844,25 @@
         }
 
         function startTracking() {
-            isTracking = true; isPaused = false; userInteracted = false;
-            startTime = Date.now(); elapsedPausedTime = 0; pauseStartTime = 0;
-            totalDistance = 0; routeCoords = [];
-            currentMapImage = null; savedActivityData = null;
+            isTracking = true; 
+            isPaused = false; 
+            userInteracted = false;
+            startTime = Date.now(); 
+            elapsedPausedTime = 0; 
+            pauseStartTime = 0;
+            totalDistance = 0; 
+            routeCoords = [];
+            currentMapImage = null; 
+            savedActivityData = null;
+            
             if (polyline) { map.removeLayer(polyline); polyline = null; }
             if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
             clearTurnMarkers();
             
-            // ✅ Reset lastTrackedPosition ke posisi saat ini
             if (lastPosition) {
                 lastTrackedPosition = lastPosition;
             }
+            lastPauseCheckTime = 0;
 
             timerInterval = setInterval(updateTimer, 1000);
             updateStatus('Berlari...', 'tracking');
@@ -847,6 +871,7 @@
             document.getElementById('btnPause').style.display = 'flex';
             document.getElementById('btnResume').style.display = 'none';
             document.getElementById('btnFinish').style.display = 'flex';
+            
             if (lastPosition) { addStartMarker(lastPosition.lat, lastPosition.lng); forceCenterMap(); }
         }
         
@@ -855,6 +880,12 @@
                 isPaused = false;
                 elapsedPausedTime += (Date.now() - pauseStartTime);
                 pauseStartTime = 0;
+                
+                if (lastPosition) {
+                    lastTrackedPosition = lastPosition;
+                }
+                lastPauseCheckTime = 0;
+                
                 updateStatus('Berlari...', 'tracking');
                 document.getElementById('btnPause').style.display = 'flex';
                 document.getElementById('btnResume').style.display = 'none';
