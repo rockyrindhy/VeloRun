@@ -286,7 +286,6 @@
             margin-top: 16px;
         }
 
-        /* ✅ CSS UNTUK LIGHTBOX PETA */
         .lightbox-content {
             position: relative;
             width: 95vw;
@@ -652,7 +651,7 @@
         </div>
     </div>
 
-    <!-- ✅ MODAL LIGHTBOX PETA (BARU) -->
+    <!-- Modal Lightbox Peta -->
     <div class="modal" id="mapLightboxModal">
         <div class="lightbox-content">
             <button class="lightbox-close" onclick="closeMapLightbox()">✕</button>
@@ -666,7 +665,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
                     Kembali
                 </button>
-            </div
+            </div>
         </div>
     </div>
 
@@ -761,7 +760,6 @@
         const AUTO_PAUSE_SPEED = 1.5;
         const AUTO_CENTER_DELAY = 5000;
 
-        // ✅ VARIABEL WAKE LOCK UNTUK MENCEGAH LAYAR MATI
         let wakeLock = null;
 
         async function requestWakeLock() {
@@ -783,8 +781,8 @@
             }
         }
 
-        // ✅ FUNGSI PROFIL & KALORI
         function openProfileModal() {
+            console.log('Tombol Profil diklik!');
             document.getElementById('profileName').value = localStorage.getItem('velorun_profileName') || '';
             document.getElementById('profileWeight').value = localStorage.getItem('velorun_userWeight') || '';
             document.getElementById('profileModal').style.display = 'flex';
@@ -814,13 +812,8 @@
         }
 
         function calculateCalories(activityType, durationStr, weightKg) {
-            const metValues = {
-                'Berjalan': 3.0,
-                'Berlari': 9.8,
-                'Bersepeda': 8.0
-            };
+            const metValues = { 'Berjalan': 3.0, 'Berlari': 9.8, 'Bersepeda': 8.0 };
             const met = metValues[activityType] || 5.0;
-            
             const parts = durationStr.split(':');
             let hours = 0;
             if (parts.length === 3) {
@@ -828,7 +821,6 @@
             } else if (parts.length === 2) {
                 hours = (parseInt(parts[0]) / 60) + (parseInt(parts[1]) / 3600);
             }
-            
             return Math.round(met * weightKg * hours);
         }
 
@@ -850,13 +842,7 @@
             const div = L.DomUtil.create('div', 'velorun-watermark');
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
-            div.innerHTML = `
-                <img src="logo.png" alt="VeloRun Logo" onerror="this.style.display='none'">
-                <div>
-                    <div class="velorun-watermark-text">VeloRun</div>
-                    <div class="velorun-watermark-by">by RockyRindhy</div>
-                </div>
-            `;
+            div.innerHTML = `<img src="logo.png" alt="VeloRun Logo" onerror="this.style.display='none'"><div><div class="velorun-watermark-text">VeloRun</div><div class="velorun-watermark-by">by RockyRindhy</div></div>`;
             return div;
         };
         watermarkControl.addTo(map);
@@ -865,85 +851,37 @@
         let isTracking = false, isPaused = false, userInteracted = false, autoCenterTimer = null;
         let startTime = 0, elapsedPausedTime = 0, pauseStartTime = 0, timerInterval = null;
         let totalDistance = 0, lastPosition = null, routeCoords = [], currentMapImage = null, gpsFirstLock = false;
-        let savedActivityData = null;
-        let lastTrackedPosition = null;
-        let lastPauseCheckTime = 0;
-        let currentDetailActivity = null;
+        let savedActivityData = null, lastTrackedPosition = null, lastPauseCheckTime = 0, currentDetailActivity = null;
 
         function normalizeTime(timeStr) {
             if (!timeStr) return '00:00:00';
             timeStr = String(timeStr).trim();
-            if (timeStr.includes('1899-12-29') || timeStr.includes('1899-12-30')) {
+            if (timeStr.includes('1899-12-29') || timeStr.includes('1899-12-30') || (timeStr.includes('T') && timeStr.includes('Z'))) {
                 try {
                     const date = new Date(timeStr);
                     if (!isNaN(date.getTime())) {
-                        const hrs = String(date.getUTCHours()).padStart(2, '0');
-                        const mins = String(date.getUTCMinutes()).padStart(2, '0');
-                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
-                        return `${hrs}:${mins}:${secs}`;
-                    }
-                } catch (e) {}
-            }
-            if (timeStr.includes('T') && timeStr.includes('Z')) {
-                try {
-                    const date = new Date(timeStr);
-                    if (!isNaN(date.getTime())) {
-                        const hrs = String(date.getUTCHours()).padStart(2, '0');
-                        const mins = String(date.getUTCMinutes()).padStart(2, '0');
-                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
-                        return `${hrs}:${mins}:${secs}`;
+                        return `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}:${String(date.getUTCSeconds()).padStart(2, '0')}`;
                     }
                 } catch (e) {}
             }
             const parts = timeStr.split(':');
-            if (parts.length === 3) {
-                const h = parseInt(parts[0]) || 0;
-                const m = parseInt(parts[1]) || 0;
-                const s = parseInt(parts[2]) || 0;
-                return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-            }
-            if (parts.length === 2) {
-                const m = parseInt(parts[0]) || 0;
-                const s = parseInt(parts[1]) || 0;
-                return `00:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-            }
+            if (parts.length === 3) return `${String(parseInt(parts[0])||0).padStart(2, '0')}:${String(parseInt(parts[1])||0).padStart(2, '0')}:${String(parseInt(parts[2])||0).padStart(2, '0')}`;
+            if (parts.length === 2) return `00:${String(parseInt(parts[0])||0).padStart(2, '0')}:${String(parseInt(parts[1])||0).padStart(2, '0')}`;
             return '00:00:00';
         }
 
         function normalizePace(paceStr) {
             if (!paceStr) return '0:00';
             paceStr = String(paceStr).trim();
-            if (paceStr.includes('1899-12-29') || paceStr.includes('1899-12-30')) {
+            if (paceStr.includes('1899-12-29') || paceStr.includes('1899-12-30') || (paceStr.includes('T') && paceStr.includes('Z'))) {
                 try {
                     const date = new Date(paceStr);
-                    if (!isNaN(date.getTime())) {
-                        const mins = date.getUTCMinutes();
-                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
-                        return `${mins}:${secs}`;
-                    }
-                } catch (e) {}
-            }
-            if (paceStr.includes('T') && paceStr.includes('Z')) {
-                try {
-                    const date = new Date(paceStr);
-                    if (!isNaN(date.getTime())) {
-                        const mins = date.getUTCMinutes();
-                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
-                        return `${mins}:${secs}`;
-                    }
+                    if (!isNaN(date.getTime())) return `${date.getUTCMinutes()}:${String(date.getUTCSeconds()).padStart(2, '0')}`;
                 } catch (e) {}
             }
             const parts = paceStr.split(':');
-            if (parts.length === 2) {
-                const m = parseInt(parts[0]) || 0;
-                const s = parseInt(parts[1]) || 0;
-                return `${m}:${String(s).padStart(2, '0')}`;
-            }
-            if (parts.length === 3) {
-                const m = parseInt(parts[1]) || 0;
-                const s = parseInt(parts[2]) || 0;
-                return `${m}:${String(s).padStart(2, '0')}`;
-            }
+            if (parts.length === 2) return `${parseInt(parts[0])||0}:${String(parseInt(parts[1])||0).padStart(2, '0')}`;
+            if (parts.length === 3) return `${parseInt(parts[1])||0}:${String(parseInt(parts[2])||0).padStart(2, '0')}`;
             return '0:00';
         }
 
@@ -952,8 +890,7 @@
             distStr = String(distStr).trim();
             if (distStr.startsWith("'")) distStr = distStr.substring(1);
             const num = parseFloat(distStr);
-            if (isNaN(num)) return '0.00';
-            return num.toFixed(2);
+            return isNaN(num) ? '0.00' : num.toFixed(2);
         }
 
         function normalizeDuration(durationStr) {
@@ -975,8 +912,7 @@
             distStr = String(distStr).trim();
             if (distStr.startsWith("'")) distStr = distStr.substring(1);
             const num = parseFloat(distStr);
-            if (isNaN(num)) return '0.00';
-            return num.toFixed(2);
+            return isNaN(num) ? '0.00' : num.toFixed(2);
         }
 
         function addPreviewWatermark(containerId) {
@@ -986,13 +922,7 @@
             if (oldWatermark) oldWatermark.remove();
             const watermark = document.createElement('div');
             watermark.className = 'preview-watermark';
-            watermark.innerHTML = `
-                <img src="logo.png" alt="VeloRun" onerror="this.style.display='none'">
-                <div>
-                    <div class="preview-watermark-text">VeloRun</div>
-                    <div class="preview-watermark-by">by RockyRindhy</div>
-                </div>
-            `;
+            watermark.innerHTML = `<img src="logo.png" alt="VeloRun" onerror="this.style.display='none'"><div><div class="preview-watermark-text">VeloRun</div><div class="preview-watermark-by">by RockyRindhy</div></div>`;
             container.appendChild(watermark);
         }
 
@@ -1000,12 +930,10 @@
             const mapElement = document.getElementById('map');
             const oldInfoBox = document.getElementById('activityInfoBox');
             if (oldInfoBox) oldInfoBox.remove();
-            
             const date = new Date();
             const dateStr = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
             const weight = getUserWeight();
             const calories = calculateCalories(activityData.equipment, activityData.time, weight);
-            
             const infoBox = document.createElement('div');
             infoBox.id = 'activityInfoBox';
             infoBox.className = 'activity-info-box';
@@ -1036,29 +964,25 @@
             }
         }
 
-        function createStartIcon() { 
-            return L.divIcon({ 
-                className: 'start-point-marker',
-                html: `<div style="width: 18px; height: 18px; background: #22C55E; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
-                iconSize: [18, 18], 
-                iconAnchor: [9, 9] 
-            }); 
-        }
-
-        function createFinishIcon() { 
-            return L.divIcon({ 
-                className: 'finish-point-marker',
-                html: `<div style="width: 18px; height: 18px; background: #EF4444; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
-                iconSize: [18, 18], 
-                iconAnchor: [9, 9] 
-            }); 
-        }
-
+        function createStartIcon() { return L.divIcon({ className: 'start-point-marker', html: `<div style="width: 18px; height: 18px; background: #22C55E; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`, iconSize: [18, 18], iconAnchor: [9, 9] }); }
+        function createFinishIcon() { return L.divIcon({ className: 'finish-point-marker', html: `<div style="width: 18px; height: 18px; background: #EF4444; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`, iconSize: [18, 18], iconAnchor: [9, 9] }); }
         function createCurrentPositionIcon() { return L.divIcon({ className: 'current-position-marker', iconSize: [20, 20], iconAnchor: [10, 10] }); }
-        function updateCurrentMarker(lat, lng) { if (!currentMarker) currentMarker = L.marker([lat, lng], { icon: createCurrentPositionIcon(), zIndexOffset: 1000 }).addTo(map); else currentMarker.setLatLng([lat, lng]); }
-        function addStartMarker(lat, lng) { if (startMarker) map.removeLayer(startMarker); startMarker = L.marker([lat, lng], { icon: createStartIcon(), title: 'Titik Mulai', zIndexOffset: 800 }).addTo(map); }
-        function addFinishMarker(lat, lng) { if (finishMarker) map.removeLayer(finishMarker); finishMarker = L.marker([lat, lng], { icon: createFinishIcon(), title: 'Titik Selesai', zIndexOffset: 800 }).addTo(map); }
-        function forceCenterMap() { if (lastPosition) { map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true, duration: 0.8 }); userInteracted = false; } }
+        
+        function updateCurrentMarker(lat, lng) { 
+            if (!currentMarker) currentMarker = L.marker([lat, lng], { icon: createCurrentPositionIcon(), zIndexOffset: 1000 }).addTo(map); 
+            else currentMarker.setLatLng([lat, lng]); 
+        }
+        function addStartMarker(lat, lng) { 
+            if (startMarker) map.removeLayer(startMarker); 
+            startMarker = L.marker([lat, lng], { icon: createStartIcon(), title: 'Titik Mulai', zIndexOffset: 800 }).addTo(map); 
+        }
+        function addFinishMarker(lat, lng) { 
+            if (finishMarker) map.removeLayer(finishMarker); 
+            finishMarker = L.marker([lat, lng], { icon: createFinishIcon(), title: 'Titik Selesai', zIndexOffset: 800 }).addTo(map); 
+        }
+        function forceCenterMap() { 
+            if (lastPosition) { map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true, duration: 0.8 }); userInteracted = false; } 
+        }
 
         map.on('dragstart zoomstart movestart', () => { clearTimeout(autoCenterTimer); userInteracted = true; });
         map.on('dragend zoomend moveend', () => { if (userInteracted && lastPosition) { clearTimeout(autoCenterTimer); autoCenterTimer = setTimeout(() => { if (userInteracted) forceCenterMap(); }, AUTO_CENTER_DELAY); } });
@@ -1167,10 +1091,7 @@
             if (finishMarker) { map.removeLayer(finishMarker); finishMarker = null; }
             if (lastPosition) lastTrackedPosition = lastPosition;
             lastPauseCheckTime = 0;
-            
-            // ✅ Aktifkan Wake Lock agar layar tidak mati
             requestWakeLock();
-            
             timerInterval = setInterval(updateTimer, 1000);
             updateStatus('Berlari... (Jangan kunci layar)', 'tracking');
             updateMarkerColor(true);
@@ -1188,14 +1109,14 @@
                 pauseStartTime = 0;
                 if (lastPosition) lastTrackedPosition = lastPosition;
                 lastPauseCheckTime = 0;
-                requestWakeLock(); // Aktifkan kembali saat resume
+                requestWakeLock();
                 updateStatus('Berlari... (Jangan kunci layar)', 'tracking');
                 document.getElementById('btnPause').style.display = 'flex';
                 document.getElementById('btnResume').style.display = 'none';
             } else {
                 isPaused = true;
                 pauseStartTime = Date.now();
-                releaseWakeLock(); // Lepaskan saat pause untuk hemat baterai
+                releaseWakeLock();
                 updateStatus(autoTriggered ? 'Jeda Otomatis (berhenti)' : 'Dijeda', 'paused');
                 document.getElementById('btnPause').style.display = 'none';
                 document.getElementById('btnResume').style.display = 'flex';
@@ -1205,7 +1126,7 @@
         function finishActivity() {
             isTracking = false; isPaused = false;
             clearInterval(timerInterval);
-            releaseWakeLock(); // ✅ Lepaskan Wake Lock saat selesai
+            releaseWakeLock();
             updateStatus('Selesai - Simpan aktivitas', 'ready');
             updateMarkerColor(false);
             if (lastPosition) addFinishMarker(lastPosition.lat, lastPosition.lng);
@@ -1245,57 +1166,37 @@
             document.getElementById('loadingText').innerText = 'Menyiapkan peta...';
             try {
                 const savedView = { center: map.getCenter(), zoom: map.getZoom() };
-                
-                // ✅ PERBAIKAN CROPPING: Invalidate size dan fitBounds yang lebih robust
                 map.invalidateSize();
                 if (routeCoords.length > 0) {
                     const bounds = L.latLngBounds(routeCoords);
-                    map.fitBounds(bounds, { padding: [100, 100], maxZoom: 15, animate: true, duration: 1.0 });
-                    await new Promise(resolve => setTimeout(resolve, 2500)); // Tunggu lebih lama agar tile load sempurna
+                    map.fitBounds(bounds, { padding: [80, 80], maxZoom: 16, animate: true, duration: 0.8 });
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                     await waitForTilesToLoad();
                 } else {
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
-                
                 document.getElementById('loadingText').innerText = 'Membuat gambar...';
                 addActivityInfoBox(activityData);
                 await new Promise(resolve => setTimeout(resolve, 300));
-                
                 const mapElement = document.getElementById('map');
-                
-                // ✅ PERBAIKAN CROPPING: Tentukan width/height eksplisit
                 const canvas = await html2canvas(mapElement, { 
-                    useCORS: true, 
-                    allowTaint: true, 
-                    backgroundColor: '#ffffff', 
-                    scale: 2,
-                    width: mapElement.offsetWidth,
-                    height: mapElement.offsetHeight,
-                    windowWidth: mapElement.offsetWidth,
-                    windowHeight: mapElement.offsetHeight,
-                    logging: false 
+                    useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scale: 2,
+                    width: mapElement.offsetWidth, height: mapElement.offsetHeight,
+                    windowWidth: mapElement.offsetWidth, windowHeight: mapElement.offsetHeight, logging: false 
                 });
-                
                 removeActivityInfoBox();
                 currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
                 map.setView(savedView.center, savedView.zoom, { animate: false });
-                
                 let imageData = null;
                 if (currentMapImage) {
                     document.getElementById('loadingText').innerText = 'Mengupload...';
                     imageData = await blobToBase64(currentMapImage);
                 }
-                
                 document.getElementById('loadingText').innerText = 'Menyimpan...';
-                const payload = { 
-                    userId, name: activityData.name, equipment: activityData.equipment, 
-                    distance: parseFloat(activityData.dist), duration: activityData.time, 
-                    pace: activityData.pace, route: activityData.route, imageData 
-                };
+                const payload = { userId, name: activityData.name, equipment: activityData.equipment, distance: parseFloat(activityData.dist), duration: activityData.time, pace: activityData.pace, route: activityData.route, imageData };
                 const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const responseText = await response.text();
                 const result = JSON.parse(responseText);
-                
                 if (result.success) {
                     savedActivityData = { ...activityData, imageUrl: result.imageUrl };
                     showResultModal(activityData);
@@ -1400,10 +1301,8 @@
             imgEl.style.display = 'none';
         }
 
-        // ✅ FUNGSI LIGHTBOX PETA
         function openMapLightbox() {
             const src = document.getElementById('detailImage').src;
-            // Jangan buka jika masih placeholder SVG
             if (src && !src.includes('svg') && currentDetailActivity) {
                 document.getElementById('lightboxImage').src = src;
                 document.getElementById('mapLightboxModal').style.display = 'flex';
@@ -1438,41 +1337,21 @@
         async function saveEdit() {
             const newName = document.getElementById('editName').value.trim();
             const newEquipment = document.getElementById('editEquipment').value;
-            
-            if (!newName) {
-                alert('Nama aktivitas tidak boleh kosong!');
-                return;
-            }
-            
-            if (!currentDetailActivity || !currentDetailActivity.timestamp) {
-                alert('Data aktivitas tidak valid!');
-                return;
-            }
+            if (!newName) { alert('Nama aktivitas tidak boleh kosong!'); return; }
+            if (!currentDetailActivity || !currentDetailActivity.timestamp) { alert('Data aktivitas tidak valid!'); return; }
             
             document.getElementById('loading').style.display = 'flex';
             document.getElementById('loadingText').innerText = 'Menyimpan perubahan...';
             closeEditModal();
-            
             try {
-                const payload = {
-                    action: 'updateActivity',
-                    userId: getUserId(),
-                    timestamp: currentDetailActivity.timestamp,
-                    name: newName,
-                    equipment: newEquipment
-                };
-                
+                const payload = { action: 'updateActivity', userId: getUserId(), timestamp: currentDetailActivity.timestamp, name: newName, equipment: newEquipment };
                 const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const responseText = await response.text();
-                const result = JSON.parse(responseText);
-                
+                const result = JSON.parse(await response.text());
                 if (result.success) {
                     alert('✅ Aktivitas berhasil diperbarui!');
                     closeDetail();
                     showHistory();
-                } else {
-                    throw new Error(result.error || 'Gagal memperbarui');
-                }
+                } else { throw new Error(result.error || 'Gagal memperbarui'); }
             } catch (error) {
                 console.error('Error:', error);
                 alert('⚠️ Gagal memperbarui aktivitas: ' + error.message);
@@ -1492,33 +1371,19 @@
         }
 
         async function confirmDelete() {
-            if (!currentDetailActivity || !currentDetailActivity.timestamp) {
-                alert('Data aktivitas tidak valid!');
-                return;
-            }
-            
+            if (!currentDetailActivity || !currentDetailActivity.timestamp) { alert('Data aktivitas tidak valid!'); return; }
             document.getElementById('loading').style.display = 'flex';
             document.getElementById('loadingText').innerText = 'Menghapus aktivitas...';
             closeDeleteModal();
-            
             try {
-                const payload = {
-                    action: 'deleteActivity',
-                    userId: getUserId(),
-                    timestamp: currentDetailActivity.timestamp
-                };
-                
+                const payload = { action: 'deleteActivity', userId: getUserId(), timestamp: currentDetailActivity.timestamp };
                 const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const responseText = await response.text();
-                const result = JSON.parse(responseText);
-                
+                const result = JSON.parse(await response.text());
                 if (result.success) {
                     alert('✅ Aktivitas berhasil dihapus!');
                     closeDetail();
                     showHistory();
-                } else {
-                    throw new Error(result.error || 'Gagal menghapus');
-                }
+                } else { throw new Error(result.error || 'Gagal menghapus'); }
             } catch (error) {
                 console.error('Error:', error);
                 alert('⚠️ Gagal menghapus aktivitas: ' + error.message);
@@ -1579,14 +1444,10 @@
 
         function showActivityDetail(activity) {
             console.log('=== DETAIL AKTIVITAS ===');
-            console.log('Activity:', activity);
-            
             currentDetailActivity = activity;
-            
             const normalizedDuration = normalizeDuration(activity.duration);
             const normalizedPace = normalizePaceFromSheet(activity.pace);
             const normalizedDistance = normalizeDistanceFromSheet(activity.distance);
-            
             const weight = getUserWeight();
             const calories = calculateCalories(activity.equipment, normalizedDuration, weight);
             
@@ -1604,8 +1465,6 @@
             const imgEl = document.getElementById('detailImage');
             const openBtn = document.getElementById('openImageBtn');
             if (openBtn) openBtn.remove();
-            
-            // ✅ Tambahkan event listener untuk membuka lightbox
             imgEl.onclick = openMapLightbox;
             
             if (activity.imageUrl && activity.imageUrl.trim() !== '') {
@@ -1614,32 +1473,24 @@
                 if (activity.imageUrl.includes('id=')) fileId = activity.imageUrl.split('id=')[1].split('&')[0];
                 else if (convertedUrl && convertedUrl.includes('/d/')) fileId = convertedUrl.split('/d/')[1];
                 
-                imgEl.onerror = null;
-                imgEl.onload = null;
-                
+                imgEl.onerror = null; imgEl.onload = null;
                 if (convertedUrl) {
                     imgEl.src = convertedUrl;
                     imgEl.style.display = 'block';
                     setTimeout(() => addPreviewWatermark('detailPreviewContainer'), 300);
-                    
                     imgEl.onerror = function() {
                         if (fileId) {
                             imgEl.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
                             imgEl.onerror = function() { showImageOpenButton(activity.imageUrl, fileId); };
-                        } else {
-                            showImageOpenButton(activity.imageUrl, null);
-                        }
+                        } else { showImageOpenButton(activity.imageUrl, null); }
                     };
-                } else {
-                    showImagePlaceholder('URL tidak valid');
-                }
-            } else {
-                showImagePlaceholder('Tidak ada gambar tersimpan');
-            }
+                } else { showImagePlaceholder('URL tidak valid'); }
+            } else { showImagePlaceholder('Tidak ada gambar tersimpan'); }
             document.getElementById('detailModal').style.display = 'flex';
         }
 
         async function showHistory() {
+            console.log('Tombol Riwayat diklik!');
             document.getElementById('historyModal').style.display = 'flex';
             const list = document.getElementById('activityList');
             list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-grey);">Memuat data...</div>';
@@ -1647,14 +1498,12 @@
                 const userId = getUserId();
                 const response = await fetch(`${GAS_URL}?action=getActivities&userId=${userId}`);
                 const responseText = await response.text();
-                console.log('=== RESPONSE DARI SERVER ===');
-                console.log(responseText);
+                console.log('=== RESPONSE DARI SERVER ===', responseText);
                 const result = JSON.parse(responseText);
                 
                 if (result.success && result.activities.length > 0) {
                     window._activities = result.activities;
                     const weight = getUserWeight();
-                    
                     list.innerHTML = result.activities.map((act, index) => {
                         const hasImage = act.imageUrl && act.imageUrl.trim() !== '';
                         const statusIcon = hasImage ? '✓' : '';
@@ -1668,8 +1517,8 @@
                         return `<div class="activity-item" onclick="showActivityDetail(window._activities[${index}])">
                             <div class="activity-info">
                                 <h4>${act.name || 'Tanpa Nama'}</h4>
-                                <p> ${normalizedDistance} km |  ${normalizedDuration} |  ${normalizedPace}</p>
-                                <p> ${calories} kkal |  ${act.equipment || '-'} |  ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                <p> ${normalizedDistance} km | ${normalizedDuration} | ${normalizedPace}</p>
+                                <p> ${calories} kkal | ${act.equipment || '-'} | ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                                 <p style="font-size:10px; color:${statusColor};">${statusIcon} ${statusText}</p>
                             </div>
                         </div>`;
@@ -1678,6 +1527,7 @@
                     list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-grey);">Belum ada aktivitas.</div>'; 
                 }
             } catch (error) { 
+                console.error('Error loading history:', error);
                 list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data.</div>'; 
             }
         }
@@ -1694,9 +1544,7 @@
         window.addEventListener('load', () => {
             initGPS();
             if (!localStorage.getItem('velorun_userWeight')) {
-                setTimeout(() => {
-                    openProfileModal();
-                }, 1000);
+                setTimeout(() => { openProfileModal(); }, 1000);
             }
         });
         
