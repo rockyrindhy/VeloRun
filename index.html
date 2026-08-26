@@ -71,12 +71,6 @@
             box-shadow: 0 2px 8px rgba(255, 107, 0, 0.4);
         }
 
-        .start-marker { background: transparent; width: 32px; height: 32px; }
-        .start-flag { width: 32px; height: 32px; position: relative; }
-
-        .turn-marker { background: transparent; width: 28px; height: 28px; }
-        .turn-arrow { width: 28px; height: 28px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
-
         .glass-panel {
             background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
             backdrop-filter: blur(24px) saturate(180%);
@@ -591,7 +585,6 @@
         const MAX_JUMP = 50;
         const AUTO_PAUSE_SPEED = 1.5;
         const AUTO_CENTER_DELAY = 5000;
-        const TURN_THRESHOLD = 45;
 
         function getUserId() {
             let userId = localStorage.getItem('velorun_userId');
@@ -622,14 +615,12 @@
         };
         watermarkControl.addTo(map);
 
-        let polyline = null, currentMarker = null, startMarker = null, watchId = null;
+        let polyline = null, currentMarker = null, startMarker = null, finishMarker = null, watchId = null;
         let isTracking = false, isPaused = false, userInteracted = false, autoCenterTimer = null;
         let startTime = 0, elapsedPausedTime = 0, pauseStartTime = 0, timerInterval = null;
         let totalDistance = 0, lastPosition = null, routeCoords = [], currentMapImage = null, gpsFirstLock = false;
         let savedActivityData = null;
-        let turnMarkers = [];
         
-        // ✅ PERBAIKAN: Variabel untuk melacak posisi terakhir SAAT AKTIF merekam
         let lastTrackedPosition = null;
         let lastPauseCheckTime = 0;
 
@@ -687,39 +678,54 @@
             }
         }
 
-        function calculateBearing(lat1, lon1, lat2, lon2) {
-            const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
-            const Δλ = (lon2 - lon1) * Math.PI / 180;
-            const y = Math.sin(Δλ) * Math.cos(φ2);
-            const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-            const θ = Math.atan2(y, x);
-            return (θ * 180 / Math.PI + 360) % 360;
+        // ✅ TITIK START - Lingkaran hijau dengan border putih
+        function createStartIcon() { 
+            return L.divIcon({ 
+                className: 'start-point-marker',
+                html: `<div style="
+                    width: 18px; 
+                    height: 18px; 
+                    background: #22C55E; 
+                    border: 3px solid white; 
+                    border-radius: 50%; 
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                "></div>`,
+                iconSize: [18, 18], 
+                iconAnchor: [9, 9] 
+            }); 
         }
 
-        function checkForTurn() {
-            if (routeCoords.length < 3) return;
-            const len = routeCoords.length;
-            const A = routeCoords[len - 3], B = routeCoords[len - 2], C = routeCoords[len - 1];
-            const bearing1 = calculateBearing(A[0], A[1], B[0], B[1]);
-            const bearing2 = calculateBearing(B[0], B[1], C[0], C[1]);
-            let diff = Math.abs(bearing2 - bearing1);
-            if (diff > 180) diff = 360 - diff;
-            if (diff > TURN_THRESHOLD) addTurnMarker(B[0], B[1], bearing2);
+        // ✅ TITIK FINISH - Lingkaran merah dengan border putih
+        function createFinishIcon() { 
+            return L.divIcon({ 
+                className: 'finish-point-marker',
+                html: `<div style="
+                    width: 18px; 
+                    height: 18px; 
+                    background: #EF4444; 
+                    border: 3px solid white; 
+                    border-radius: 50%; 
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                "></div>`,
+                iconSize: [18, 18], 
+                iconAnchor: [9, 9] 
+            }); 
         }
-
-        function addTurnMarker(lat, lng, bearing) {
-            const arrowSvg = `<svg class="turn-arrow" viewBox="0 0 24 24" style="transform: rotate(${bearing}deg);"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity="0.3"/></filter></defs><path d="M12 2L4 14h5v8h6v-8h5z" fill="#FF6B00" stroke="white" stroke-width="1.5" filter="url(#shadow)"/></svg>`;
-            const icon = L.divIcon({ className: 'turn-marker', html: arrowSvg, iconSize: [28, 28], iconAnchor: [14, 14] });
-            const marker = L.marker([lat, lng], { icon, zIndexOffset: 500 }).addTo(map);
-            turnMarkers.push(marker);
-        }
-
-        function clearTurnMarkers() { turnMarkers.forEach(marker => map.removeLayer(marker)); turnMarkers = []; }
 
         function createCurrentPositionIcon() { return L.divIcon({ className: 'current-position-marker', iconSize: [20, 20], iconAnchor: [10, 10] }); }
-        function createStartIcon() { return L.divIcon({ className: 'start-marker', html: `<svg class="start-flag" viewBox="0 0 32 32"><defs><filter id="startShadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-opacity="0.3"/></filter></defs><path d="M8 4v24M8 4l16 6-16 6" fill="none" stroke="#FF6B00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#startShadow)"/><circle cx="8" cy="4" r="3" fill="#FF6B00" stroke="white" stroke-width="1.5"/></svg>`, iconSize: [32, 32], iconAnchor: [8, 32] }); }
         function updateCurrentMarker(lat, lng) { if (!currentMarker) currentMarker = L.marker([lat, lng], { icon: createCurrentPositionIcon(), zIndexOffset: 1000 }).addTo(map); else currentMarker.setLatLng([lat, lng]); }
-        function addStartMarker(lat, lng) { if (startMarker) map.removeLayer(startMarker); startMarker = L.marker([lat, lng], { icon: createStartIcon(), title: 'Titik Mulai', zIndexOffset: 800 }).addTo(map); }
+        
+        function addStartMarker(lat, lng) { 
+            if (startMarker) map.removeLayer(startMarker); 
+            startMarker = L.marker([lat, lng], { icon: createStartIcon(), title: 'Titik Mulai', zIndexOffset: 800 }).addTo(map); 
+        }
+
+        // ✅ Fungsi baru untuk menambahkan marker finish
+        function addFinishMarker(lat, lng) {
+            if (finishMarker) map.removeLayer(finishMarker);
+            finishMarker = L.marker([lat, lng], { icon: createFinishIcon(), title: 'Titik Selesai', zIndexOffset: 800 }).addTo(map);
+        }
+
         function forceCenterMap() { if (lastPosition) { map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true, duration: 0.8 }); userInteracted = false; } }
 
         map.on('dragstart zoomstart movestart', () => { clearTimeout(autoCenterTimer); userInteracted = true; });
@@ -732,10 +738,9 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
         }
 
-        // ✅ PERBAIKAN: Fungsi checkAutoPause dengan debounce dan referensi posisi yang benar
         function checkAutoPause(currentPos) {
             const now = Date.now();
-            if (now - lastPauseCheckTime < 2000) return isPaused; // Debounce 2 detik
+            if (now - lastPauseCheckTime < 2000) return isPaused;
             
             if (!lastTrackedPosition) return false;
             
@@ -795,9 +800,8 @@
                 const shouldPause = checkAutoPause(currentPos);
                 
                 if (shouldPause && !isPaused) {
-                    togglePause(true); // Auto pause
+                    togglePause(true);
                 } else if (!shouldPause && isPaused) {
-                    // ✅ Auto resume: Hanya resume jika kecepatan > 2.0 km/j (lebih tinggi dari threshold pause)
                     const dist = getDistanceFromLatLonInM(lastTrackedPosition.lat, lastTrackedPosition.lng, currentPos.lat, currentPos.lng);
                     const timeDiff = (currentPos.timestamp - lastTrackedPosition.timestamp) / 1000;
                     const speedKmh = (dist / timeDiff) * 3.6;
@@ -808,7 +812,6 @@
                 }
 
                 if (!isPaused) {
-                    // ✅ Update lastTrackedPosition HANYA saat aktif merekam
                     lastTrackedPosition = currentPos;
                     
                     if (routeCoords.length > 0) {
@@ -822,7 +825,6 @@
                             } else {
                                 polyline.addLatLng([lat, lng]);
                             }
-                            checkForTurn();
                         }
                     } else {
                         routeCoords.push([lat, lng]);
@@ -857,7 +859,7 @@
             
             if (polyline) { map.removeLayer(polyline); polyline = null; }
             if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
-            clearTurnMarkers();
+            if (finishMarker) { map.removeLayer(finishMarker); finishMarker = null; }
             
             if (lastPosition) {
                 lastTrackedPosition = lastPosition;
@@ -903,6 +905,12 @@
             clearInterval(timerInterval);
             updateStatus('Selesai - Simpan aktivitas', 'ready');
             updateMarkerColor(false);
+            
+            // ✅ Tambahkan marker finish di posisi terakhir
+            if (lastPosition) {
+                addFinishMarker(lastPosition.lat, lastPosition.lng);
+            }
+            
             document.getElementById('btnPause').style.display = 'none';
             document.getElementById('btnResume').style.display = 'none';
             document.getElementById('btnFinish').style.display = 'none';
@@ -1048,7 +1056,7 @@
             routeCoords = [];
             if (polyline) { map.removeLayer(polyline); polyline = null; }
             if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
-            clearTurnMarkers();
+            if (finishMarker) { map.removeLayer(finishMarker); finishMarker = null; }
             currentMapImage = null; savedActivityData = null;
             updateMarkerColor(false);
             document.getElementById('timeDisplay').innerText = "00:00:00";
