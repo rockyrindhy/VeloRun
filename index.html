@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="theme-color" content="#FF6B00">
+    <meta name="msapplication-TileColor" content="#FF6B00">
+    <meta name="msapplication-navbutton-color" content="#FF6B00">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <title>VeloRun - Sport Tracker by RockyRindhy</title>
+    <meta name="description" content="Aplikasi tracking olahraga premium - Lari, Sepeda, Jalan Kaki">
+    <meta name="author" content="RockyRindhy">
+    
+    <link rel="icon" type="image/png" sizes="32x32" href="logo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="logo.png">
+    <link rel="shortcut icon" href="logo.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="logo.png">
+    
+    <link rel="icon" type="image/png" sizes="192x192" href="logo.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="logo.png">
+    
+    <meta property="og:title" content="VeloRun - Sport Tracker">
+    <meta property="og:description" content="Aplikasi tracking olahraga premium oleh RockyRindhy">
+    <meta property="og:image" content="logo.png">
+    <meta property="og:type" content="website">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="VeloRun - Sport Tracker">
+    <meta name="twitter:description" content="Aplikasi tracking olahraga premium oleh RockyRindhy">
+    <meta name="twitter:image" content="logo.png">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-orange: #FF6B00;
+            --primary-orange-dark: #CC5500;
+            --gps-green: #22C55E;
+            --text-black: #0F172A;
+            --text-grey: #475569;
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; }
+        
+        body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif; background: #E2E8F0; overflow: hidden; }
+        #map { width: 100%; height: 100%; z-index: 1; }
+        
+        .current-position-marker {
+            background: var(--gps-green);
+            width: 20px; height: 20px; border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            position: relative;
+        }
+        .current-position-marker::before {
+            content: ''; position: absolute; top: 20%; left: 25%; width: 30%; height: 30%;
+            background: rgba(255, 255, 255, 0.6); border-radius: 50%; filter: blur(0.5px);
+        }
+        .current-position-marker.tracking {
+            background: var(--primary-orange);
+            box-shadow: 0 2px 8px rgba(255, 107, 0, 0.4);
+        }
+
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glossy-highlight::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 55%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.1) 100%);
+            border-radius: inherit; pointer-events: none; z-index: 0;
+        }
+
+        .overlay { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 32px 32px 0 0; padding: 24px 20px 32px; z-index: 1000; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; position: relative; z-index: 1; }
+        .stat-item { flex: 1; text-align: center; padding: 14px 8px; margin: 0 6px; background: rgba(255,255,255,0.5); border-radius: 20px; border: 1px solid rgba(255,255,255,0.8); box-shadow: inset 0 2px 4px rgba(255,255,255,1), 0 4px 8px rgba(0,0,0,0.05); }
+        .stat-value { font-size: 24px; font-weight: 800; color: var(--primary-orange); text-shadow: 0 1px 2px rgba(255, 107, 0, 0.2); letter-spacing: -0.5px; }
+        .stat-label { font-size: 10px; color: var(--text-black); text-transform: uppercase; font-weight: 700; margin-top: 4px; letter-spacing: 0.5px; opacity: 0.7; }
+        
+        .btn-group { display: flex; gap: 12px; justify-content: center; position: relative; z-index: 1; }
+        .btn { 
+            flex: 1; padding: 16px; border: none; border-radius: 20px; 
+            font-size: 15px; font-weight: 700; cursor: pointer; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            position: relative; overflow: hidden; 
+            display: flex; align-items: center; justify-content: center; gap: 8px; 
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.8); 
+        }
+        .btn:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .btn-primary { background: linear-gradient(180deg, #FF8C00 0%, var(--primary-orange) 50%, var(--primary-orange-dark) 100%); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .btn-dark { background: linear-gradient(180deg, #334155 0%, #0F172A 50%, #020617 100%); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .btn-glass { background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(241,245,249,0.8) 100%); color: var(--text-black); border: 1px solid rgba(255,255,255,1); box-shadow: 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1); }
+        .btn-warning { background: linear-gradient(180deg, #f59e0b 0%, #d97706 50%, #92400e 100%); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .btn-success { background: linear-gradient(180deg, #10b981 0%, #059669 50%, #047857 100%); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .btn-danger { background: linear-gradient(180deg, #ef4444 0%, #dc2626 50%, #991b1b 100%); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .btn-icon { flex: 0.35; padding: 16px 8px; }
+        .btn:disabled { opacity: 0.5; filter: grayscale(0.8); cursor: not-allowed; }
+
+        .status-bar { position: absolute; top: 16px; left: 16px; right: 16px; padding: 12px 18px; border-radius: 24px; z-index: 999; display: flex; align-items: center; justify-content: space-between; }
+        .status-indicator { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: var(--text-black); position: relative; z-index: 1; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+        .status-dot.ready { background: #10B981; color: #10B981; animation: blink 1.5s infinite; }
+        .status-dot.tracking { background: var(--primary-orange); color: var(--primary-orange); animation: blink 1s infinite; }
+        .status-dot.paused { background: #F59E0B; color: #F59E0B; animation: none; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .accuracy-info { font-size: 12px; color: var(--text-grey); font-weight: 600; position: relative; z-index: 1; }
+
+        .gps-loading, #loading { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(255,255,255,0.85); 
+            backdrop-filter: blur(16px); 
+            z-index: 3000; 
+            display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; 
+        }
+        .gps-loading.hidden { display: none; }
+        #loading { display: none; }
+        
+        .spinner { 
+            width: 48px; height: 48px; border-radius: 50%; 
+            border: 3px solid rgba(255, 107, 0, 0.1); 
+            border-top-color: var(--primary-orange); 
+            animation: spin 0.8s linear infinite; 
+            margin-bottom: 16px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        .loading-text, .gps-loading-text { 
+            color: var(--text-black); 
+            font-size: 14px; 
+            font-weight: 400;
+            letter-spacing: 0.2px;
+            margin-bottom: 4px; 
+            position: relative; 
+            z-index: 1;
+        }
+        
+        .gps-loading-sub { 
+            color: var(--text-grey); 
+            font-size: 12px; 
+            font-weight: 400;
+            text-align: center; 
+            padding: 0 30px; 
+            position: relative; 
+            z-index: 1;
+            opacity: 0.7;
+        }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 2000; justify-content: center; align-items: center; padding: 16px; }
+        
+        #detailModal { z-index: 2100 !important; }
+        #detailModal .modal-content { z-index: 2101 !important; }
+        #editModal { z-index: 2200 !important; }
+        #editModal .modal-content { z-index: 2201 !important; }
+        #deleteModal { z-index: 2300 !important; }
+        #deleteModal .modal-content { z-index: 2301 !important; }
+        #profileModal { z-index: 2400 !important; }
+        #profileModal .modal-content { z-index: 2401 !important; }
+        
+        .modal-content { padding: 24px; border-radius: 28px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
+        @keyframes slideUp { from { transform: translateY(40px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        .modal-content h3 { margin: 0 0 16px 0; color: var(--text-black); font-size: 20px; font-weight: 800; position: relative; z-index: 1; }
+        .modal-content input, .modal-content select { width: 100%; padding: 14px; margin: 10px 0; background: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,1); border-radius: 16px; font-size: 15px; color: var(--text-black); font-weight: 600; outline: none; transition: all 0.2s; position: relative; z-index: 1; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .modal-content input:focus, .modal-content select:focus { border-color: var(--primary-orange); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.2), inset 0 2px 4px rgba(0,0,0,0.05); }
+        .modal-content select option { background: white; color: var(--text-black); }
+        
+        .activity-summary {
+            background: rgba(255, 107, 0, 0.08);
+            border: 1px solid rgba(255, 107, 0, 0.3);
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 14px;
+            position: relative;
+            z-index: 1;
+        }
+        .summary-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; color: var(--text-black); font-weight: 600; }
+        .summary-row span:first-child { color: var(--text-grey); }
+        .summary-row span:last-child { color: var(--primary-orange); font-weight: 800; }
+
+        .image-preview-container {
+            width: 100%; height: 200px; border-radius: 20px; overflow: hidden;
+            margin-bottom: 14px; border: 2px solid rgba(255, 107, 0, 0.3);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.5);
+            position: relative; z-index: 1; background: #f1f5f9;
+        }
+        
+        .image-preview { width: 100%; height: 100%; object-fit: cover; object-position: center center; display: block; }
+        
+        .preview-label {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(255, 107, 0, 0.9); color: white;
+            font-size: 10px; font-weight: 700; padding: 4px 10px;
+            border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+            z-index: 2; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .activity-list { max-height: 50vh; overflow-y: auto; position: relative; z-index: 1; padding-right: 4px; }
+        
+        .activity-item { 
+            background: rgba(255,255,255,0.6); 
+            padding: 14px; 
+            margin: 8px 0; 
+            border-radius: 16px; 
+            border-left: 4px solid var(--primary-orange); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .activity-item:hover {
+            background: rgba(255,255,255,0.8);
+            transform: translateX(4px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+        }
+        .activity-item:active { transform: scale(0.98); }
+        
+        .activity-info h4 { margin: 0 0 6px 0; color: var(--text-black); font-size: 15px; font-weight: 800; }
+        .activity-info p { margin: 3px 0; font-size: 12px; color: var(--text-grey); font-weight: 600; }
+        
+        .detail-image-container {
+            width: 100%; height: 220px; border-radius: 20px; overflow: hidden;
+            margin-bottom: 16px; border: 2px solid rgba(255, 107, 0, 0.3);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            position: relative; z-index: 1; background: #f1f5f9;
+        }
+        
+        .detail-image { width: 100%; height: 100%; object-fit: cover; object-position: center center; display: block; }
+        
+        .detail-label {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(255, 107, 0, 0.95); color: white;
+            font-size: 10px; font-weight: 700; padding: 4px 10px;
+            border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+            z-index: 2; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .detail-info {
+            background: rgba(255, 107, 0, 0.05);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .detail-row {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 107, 0, 0.1);
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-row span:first-child { 
+            color: var(--text-grey); 
+            font-weight: 600; 
+            font-size: 13px;
+            text-align: left;
+            flex: 1;
+        }
+        .detail-row span:last-child { 
+            color: var(--text-black); 
+            font-weight: 700; 
+            font-size: 14px;
+            text-align: right;
+            flex: 1;
+        }
+        
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        
+        .leaflet-control-zoom {
+            position: absolute !important;
+            bottom: 280px !important;
+            right: 16px !important;
+            top: auto !important;
+            left: auto !important;
+            z-index: 998 !important;
+            border: none !important;
+            border-radius: 16px !important;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(255, 107, 0, 0.25) !important;
+        }
+
+        .leaflet-control-zoom a {
+            width: 44px !important;
+            height: 44px !important;
+            line-height: 44px !important;
+            font-size: 22px !important;
+            font-weight: 700 !important;
+            color: var(--primary-orange) !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-bottom: 1px solid rgba(255, 107, 0, 0.2) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.2s ease !important;
+        }
+
+        .leaflet-control-zoom a:hover {
+            background: linear-gradient(180deg, #FF8C00 0%, var(--primary-orange) 100%) !important;
+            color: white !important;
+            border-color: var(--primary-orange-dark) !important;
+        }
+
+        .leaflet-control-zoom a:active {
+            transform: scale(0.95);
+        }
+
+        .leaflet-control-zoom a:last-child {
+            border-bottom: none !important;
+        }
+
+        .velorun-watermark {
+            background: transparent !important;
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 6px 10px !important;
+            box-shadow: none !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            z-index: 997 !important;
+        }
+
+        .velorun-watermark img {
+            width: 24px !important;
+            height: 24px !important;
+            object-fit: contain !important;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.9)) !important;
+        }
+
+        .velorun-watermark-text {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            color: white !important;
+            letter-spacing: -0.3px !important;
+            white-space: nowrap !important;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.95), 0 1px 2px rgba(0,0,0,0.9) !important;
+        }
+
+        .velorun-watermark-by {
+            font-size: 9px !important;
+            font-weight: 600 !important;
+            color: rgba(255,255,255,0.95) !important;
+            margin-top: -2px !important;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.9) !important;
+        }
+
+        .preview-watermark {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+            pointer-events: none;
+            padding: 4px 8px;
+        }
+
+        .preview-watermark img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .preview-watermark-text {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            font-size: 16px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.3px;
+            white-space: nowrap;
+        }
+
+        .preview-watermark-by {
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.95);
+            margin-top: -2px;
+        }
+
+        .activity-info-box {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            z-index: 997;
+            min-width: 180px;
+            max-width: 220px;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .activity-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+
+        .activity-info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .activity-info-label {
+            font-weight: 700;
+            color: #0F172A;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .activity-info-value {
+            font-weight: 600;
+            color: #0F172A;
+            font-size: 11px;
+            text-align: right;
+        }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 107, 0, 0.3); border-radius: 10px; }
+        .modal-content::-webkit-scrollbar { width: 4px; }
+        .modal-content::-webkit-scrollbar-thumb { background: rgba(255, 107, 0, 0.4); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+    
+    <div class="gps-loading" id="gpsLoading">
+        <div class="spinner"></div>
+        <div class="gps-loading-text">Mencari lokasi Anda...</div>
+        <div class="gps-loading-sub">Pastikan GPS aktif dan izinkan akses lokasi</div>
+    </div>
+    
+    <div class="status-bar glass-panel glossy-highlight" id="statusBar">
+        <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Mencari GPS...</span>
+        </div>
+        <div class="accuracy-info" id="accuracyInfo">Akurasi: -</div>
+    </div>
+    
+    <div id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Memproses...</div>
+    </div>
+
+    <div class="overlay glass-panel glossy-highlight" id="controlPanel">
+        <div class="stats">
+            <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--primary-orange)" style="width:18px; height:18px; margin:0 auto 4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                <div class="stat-value" id="timeDisplay">00:00:00</div>
+                <div class="stat-label">Waktu</div>
+            </div>
+            <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--primary-orange)" style="width:18px; height:18px; margin:0 auto 4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+                <div class="stat-value" id="distDisplay">0.00</div>
+                <div class="stat-label">Kilometer</div>
+            </div>
+            <div class="stat-item">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--primary-orange)" style="width:18px; height:18px; margin:0 auto 4px;"><path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg>
+                <div class="stat-value" id="paceDisplay">0:00</div>
+                <div class="stat-label">Pace</div>
+            </div>
+        </div>
+        <div class="btn-group" id="mainButtonGroup">
+            <button class="btn btn-glass btn-icon" onclick="openProfileModal()" title="Profil">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
+            </button>
+            <button class="btn btn-glass btn-icon" onclick="showHistory()" title="Riwayat">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>
+            </button>
+            
+            <button class="btn btn-primary" id="btnStart" onclick="startTracking()" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clip-rule="evenodd" /></svg>
+                Mulai
+            </button>
+            
+            <button class="btn btn-warning" id="btnPause" onclick="togglePause()" style="display:none;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z" clip-rule="evenodd" /></svg>
+                Jeda
+            </button>
+            <button class="btn btn-dark" id="btnFinish" onclick="finishActivity()" style="display:none;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 7.5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9Z" clip-rule="evenodd" /></svg>
+                Selesai
+            </button>
+            
+            <button class="btn btn-success" id="btnResume" onclick="togglePause()" style="display:none;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clip-rule="evenodd" /></svg>
+                Lanjutkan
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Simpan -->
+    <div class="modal" id="saveModal">
+        <div class="modal-content glass-panel glossy-highlight">
+            <h3>Simpan Aktivitas</h3>
+            <div class="activity-summary">
+                <div class="summary-row"><span>Waktu</span><span id="summaryTime">00:00:00</span></div>
+                <div class="summary-row"><span>Jarak</span><span id="summaryDist">0.00 km</span></div>
+                <div class="summary-row"><span>Pace</span><span id="summaryPace">0:00</span></div>
+            </div>
+            <input type="text" id="actName" placeholder="Tulis Aktivitas...." value="">
+            <select id="actEquipment">
+                <option value="Berjalan">Berjalan</option>
+                <option value="Berlari" selected>Berlari</option>
+                <option value="Bersepeda">Bersepeda</option>
+            </select>
+            <div class="btn-group" style="margin-top: 20px;">
+                <button class="btn btn-glass" onclick="backToTracking()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
+                    Kembali
+                </button>
+                <button class="btn btn-primary" onclick="saveActivity()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 0 1 1.04-.208Z" clip-rule="evenodd" /></svg>
+                    Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Hasil -->
+    <div class="modal" id="resultModal">
+        <div class="modal-content glass-panel glossy-highlight">
+            <h3>Aktivitas Tersimpan!</h3>
+            <div class="image-preview-container" id="resultPreviewContainer">
+                <div class="preview-label">Preview</div>
+                <img id="resultImage" class="image-preview" src="" alt="Peta rute">
+            </div>
+            <div class="activity-summary">
+                <div class="summary-row"><span>Nama</span><span id="resultName">-</span></div>
+                <div class="summary-row"><span>Jarak</span><span id="resultDist">-</span></div>
+                <div class="summary-row"><span>Waktu</span><span id="resultTime">-</span></div>
+            </div>
+            <div class="btn-group" style="margin-bottom: 10px;">
+                <button class="btn btn-primary" onclick="shareActivity()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M15.75 4.5a3 3 0 1 1 .825 2.066l-8.421 4.679a3.002 3.002 0 0 1 0 1.51l8.421 4.679a3 3 0 1 1-.729 1.31l-8.421-4.678a3 3 0 1 1 0-4.132l8.421-4.679a3 3 0 0 1-.096-.755Z" clip-rule="evenodd" /></svg>
+                    Share
+                </button>
+                <button class="btn btn-success" onclick="downloadImage()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" /></svg>
+                    Simpan
+                </button>
+            </div>
+            <button class="btn btn-dark" onclick="startNewActivity()" style="width: 100%;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clip-rule="evenodd" /></svg>
+                Mulai Aktivitas Baru
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Detail Aktivitas -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content glass-panel glossy-highlight">
+            <h3>Detail Aktivitas</h3>
+            <div class="detail-image-container" id="detailPreviewContainer">
+                <div class="detail-label">Peta Rute</div>
+                <img id="detailImage" class="detail-image" src="" alt="Peta rute">
+            </div>
+            <div class="detail-info">
+                <div class="detail-row"><span>Aktivitas</span><span id="detailName">-</span></div>
+                <div class="detail-row"><span>Tipe</span><span id="detailEquipment">-</span></div>
+                <div class="detail-row"><span>Jarak</span><span id="detailDistance">-</span></div>
+                <div class="detail-row"><span>Waktu</span><span id="detailDuration">-</span></div>
+                <div class="detail-row"><span>Pace</span><span id="detailPace">-</span></div>
+                <div class="detail-row"><span>Kalori</span><span id="detailCalories">-</span></div>
+                <div class="detail-row"><span>Tanggal</span><span id="detailDate">-</span></div>
+            </div>
+            
+            <div class="detail-actions">
+                <button class="btn btn-warning" onclick="openEditModal()" style="flex: 1;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z" /></svg>
+                    Edit
+                </button>
+                <button class="btn btn-danger" onclick="openDeleteModal()" style="flex: 1;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path fill-rule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z" clip-rule="evenodd" /></svg>
+                    Hapus
+                </button>
+            </div>
+            <button class="btn btn-dark" onclick="closeDetail()" style="width: 100%; margin-top: 10px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Edit Aktivitas -->
+    <div class="modal" id="editModal">
+        <div class="modal-content glass-panel glossy-highlight">
+            <h3>Edit Aktivitas</h3>
+            <p style="color: var(--text-grey); font-size: 13px; margin-bottom: 16px; position: relative; z-index: 1;">Ubah nama dan tipe aktivitas</p>
+            
+            <label style="font-size: 12px; color: var(--text-grey); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; position: relative; z-index: 1;">Nama Aktivitas</label>
+            <input type="text" id="editName" placeholder="Nama Aktivitas">
+            
+            <label style="font-size: 12px; color: var(--text-grey); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; position: relative; z-index: 1;">Tipe Aktivitas</label>
+            <select id="editEquipment">
+                <option value="Berjalan">Berjalan</option>
+                <option value="Berlari">Berlari</option>
+                <option value="Bersepeda">Bersepeda</option>
+            </select>
+            
+            <div class="btn-group" style="margin-top: 20px;">
+                <button class="btn btn-glass" onclick="closeEditModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    Batal
+                </button>
+                <button class="btn btn-primary" onclick="saveEdit()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 0 1 1.04-.208Z" clip-rule="evenodd" /></svg>
+                    Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content glass-panel glossy-highlight">
+            <h3>Hapus Aktivitas?</h3>
+            <p style="color: var(--text-grey); font-size: 14px; margin-bottom: 20px; line-height: 1.5; position: relative; z-index: 1;">
+                Aktivitas <strong id="deleteActivityName" style="color: var(--primary-orange);">-</strong> akan dihapus permanen dan tidak dapat dikembalikan.
+            </p>
+            
+            <div class="btn-group">
+                <button class="btn btn-glass" onclick="closeDeleteModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
+                    Batal
+                </button>
+                <button class="btn btn-danger" onclick="confirmDelete()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z" clip-rule="evenodd" /></svg>
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ MODAL PROFIL PENGGUNA (BARU) -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content glass-panel glossy-highlight">
+            <h3>⚙️ Profil Pengguna</h3>
+            <p style="color: var(--text-grey); font-size: 13px; margin-bottom: 16px; position: relative; z-index: 1;">Data ini digunakan untuk menghitung estimasi kalori yang terbakar secara akurat.</p>
+            
+            <label style="font-size: 12px; color: var(--text-grey); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; position: relative; z-index: 1;">Nama Tampilan</label>
+            <input type="text" id="profileName" placeholder="Nama Anda (Opsional)">
+            
+            <label style="font-size: 12px; color: var(--text-grey); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; position: relative; z-index: 1;">Berat Badan (kg)</label>
+            <input type="number" id="profileWeight" placeholder="Contoh: 65" min="30" max="200">
+            
+            <div class="btn-group" style="margin-top: 20px;">
+                <button class="btn btn-glass" onclick="closeProfileModal()">Batal</button>
+                <button class="btn btn-primary" onclick="saveProfile()">Simpan Profil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal History -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content glass-panel glossy-highlight">
+            <h3>Riwayat Aktivitas</h3>
+            <div id="activityList" class="activity-list">Memuat data...</div>
+            <button class="btn btn-dark" onclick="closeHistory()" style="margin-top: 20px; width: 100%;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyv6XJPXkUx6CfGxOy8KpelHeRwtb-hBxrfqb2PqeiIrByl6GsNFOjz2T2ZHyapYkel/exec';
+        const DEFAULT_ZOOM = 16;
+        const MIN_ACCURACY = 30;
+        const MAX_JUMP = 50;
+        const AUTO_PAUSE_SPEED = 1.5;
+        const AUTO_CENTER_DELAY = 5000;
+
+        // ✅ FUNGSI PROFIL & KALORI
+        function openProfileModal() {
+            document.getElementById('profileName').value = localStorage.getItem('velorun_profileName') || '';
+            document.getElementById('profileWeight').value = localStorage.getItem('velorun_userWeight') || '';
+            document.getElementById('profileModal').style.display = 'flex';
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('profileName').value.trim();
+            const weight = document.getElementById('profileWeight').value;
+            
+            if (!weight || weight < 30 || weight > 200) {
+                alert('Mohon masukkan berat badan yang valid (30-200 kg) untuk menghitung kalori.');
+                return;
+            }
+            
+            localStorage.setItem('velorun_profileName', name);
+            localStorage.setItem('velorun_userWeight', weight);
+            closeProfileModal();
+            alert('✅ Profil berhasil disimpan! Kalori akan dihitung berdasarkan data ini.');
+        }
+
+        function getUserWeight() {
+            return parseFloat(localStorage.getItem('velorun_userWeight')) || 70; // Default 70kg
+        }
+
+        function calculateCalories(activityType, durationStr, weightKg) {
+            const metValues = {
+                'Berjalan': 3.0,
+                'Berlari': 9.8,
+                'Bersepeda': 8.0
+            };
+            const met = metValues[activityType] || 5.0;
+            
+            const parts = durationStr.split(':');
+            let hours = 0;
+            if (parts.length === 3) {
+                hours = parseInt(parts[0]) + (parseInt(parts[1]) / 60) + (parseInt(parts[2]) / 3600);
+            } else if (parts.length === 2) {
+                hours = (parseInt(parts[0]) / 60) + (parseInt(parts[1]) / 3600);
+            }
+            
+            return Math.round(met * weightKg * hours);
+        }
+
+        function getUserId() {
+            let userId = localStorage.getItem('velorun_userId');
+            if (!userId) {
+                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('velorun_userId', userId);
+            }
+            return userId;
+        }
+
+        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-6.2088, 106.8456], DEFAULT_ZOOM);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, crossOrigin: 'anonymous' }).addTo(map);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        const watermarkControl = L.control({ position: 'bottomleft' });
+        watermarkControl.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'velorun-watermark');
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+            div.innerHTML = `
+                <img src="logo.png" alt="VeloRun Logo" onerror="this.style.display='none'">
+                <div>
+                    <div class="velorun-watermark-text">VeloRun</div>
+                    <div class="velorun-watermark-by">by RockyRindhy</div>
+                </div>
+            `;
+            return div;
+        };
+        watermarkControl.addTo(map);
+
+        let polyline = null, currentMarker = null, startMarker = null, finishMarker = null, watchId = null;
+        let isTracking = false, isPaused = false, userInteracted = false, autoCenterTimer = null;
+        let startTime = 0, elapsedPausedTime = 0, pauseStartTime = 0, timerInterval = null;
+        let totalDistance = 0, lastPosition = null, routeCoords = [], currentMapImage = null, gpsFirstLock = false;
+        let savedActivityData = null;
+        let lastTrackedPosition = null;
+        let lastPauseCheckTime = 0;
+        let currentDetailActivity = null;
+
+        function normalizeTime(timeStr) {
+            if (!timeStr) return '00:00:00';
+            timeStr = String(timeStr).trim();
+            if (timeStr.includes('1899-12-29') || timeStr.includes('1899-12-30')) {
+                try {
+                    const date = new Date(timeStr);
+                    if (!isNaN(date.getTime())) {
+                        const hrs = String(date.getUTCHours()).padStart(2, '0');
+                        const mins = String(date.getUTCMinutes()).padStart(2, '0');
+                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
+                        return `${hrs}:${mins}:${secs}`;
+                    }
+                } catch (e) {}
+            }
+            if (timeStr.includes('T') && timeStr.includes('Z')) {
+                try {
+                    const date = new Date(timeStr);
+                    if (!isNaN(date.getTime())) {
+                        const hrs = String(date.getUTCHours()).padStart(2, '0');
+                        const mins = String(date.getUTCMinutes()).padStart(2, '0');
+                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
+                        return `${hrs}:${mins}:${secs}`;
+                    }
+                } catch (e) {}
+            }
+            const parts = timeStr.split(':');
+            if (parts.length === 3) {
+                const h = parseInt(parts[0]) || 0;
+                const m = parseInt(parts[1]) || 0;
+                const s = parseInt(parts[2]) || 0;
+                return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+            if (parts.length === 2) {
+                const m = parseInt(parts[0]) || 0;
+                const s = parseInt(parts[1]) || 0;
+                return `00:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+            return '00:00:00';
+        }
+
+        function normalizePace(paceStr) {
+            if (!paceStr) return '0:00';
+            paceStr = String(paceStr).trim();
+            if (paceStr.includes('1899-12-29') || paceStr.includes('1899-12-30')) {
+                try {
+                    const date = new Date(paceStr);
+                    if (!isNaN(date.getTime())) {
+                        const mins = date.getUTCMinutes();
+                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
+                        return `${mins}:${secs}`;
+                    }
+                } catch (e) {}
+            }
+            if (paceStr.includes('T') && paceStr.includes('Z')) {
+                try {
+                    const date = new Date(paceStr);
+                    if (!isNaN(date.getTime())) {
+                        const mins = date.getUTCMinutes();
+                        const secs = String(date.getUTCSeconds()).padStart(2, '0');
+                        return `${mins}:${secs}`;
+                    }
+                } catch (e) {}
+            }
+            const parts = paceStr.split(':');
+            if (parts.length === 2) {
+                const m = parseInt(parts[0]) || 0;
+                const s = parseInt(parts[1]) || 0;
+                return `${m}:${String(s).padStart(2, '0')}`;
+            }
+            if (parts.length === 3) {
+                const m = parseInt(parts[1]) || 0;
+                const s = parseInt(parts[2]) || 0;
+                return `${m}:${String(s).padStart(2, '0')}`;
+            }
+            return '0:00';
+        }
+
+        function normalizeDistance(distStr) {
+            if (!distStr) return '0.00';
+            distStr = String(distStr).trim();
+            if (distStr.startsWith("'")) distStr = distStr.substring(1);
+            const num = parseFloat(distStr);
+            if (isNaN(num)) return '0.00';
+            return num.toFixed(2);
+        }
+
+        function normalizeDuration(durationStr) {
+            if (!durationStr) return '00:00:00';
+            durationStr = String(durationStr).trim();
+            if (durationStr.startsWith("'")) durationStr = durationStr.substring(1);
+            return normalizeTime(durationStr);
+        }
+
+        function normalizePaceFromSheet(paceStr) {
+            if (!paceStr) return '0:00';
+            paceStr = String(paceStr).trim();
+            if (paceStr.startsWith("'")) paceStr = paceStr.substring(1);
+            return normalizePace(paceStr);
+        }
+
+        function normalizeDistanceFromSheet(distStr) {
+            if (!distStr) return '0.00';
+            distStr = String(distStr).trim();
+            if (distStr.startsWith("'")) distStr = distStr.substring(1);
+            const num = parseFloat(distStr);
+            if (isNaN(num)) return '0.00';
+            return num.toFixed(2);
+        }
+
+        function addPreviewWatermark(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const oldWatermark = container.querySelector('.preview-watermark');
+            if (oldWatermark) oldWatermark.remove();
+            const watermark = document.createElement('div');
+            watermark.className = 'preview-watermark';
+            watermark.innerHTML = `
+                <img src="logo.png" alt="VeloRun" onerror="this.style.display='none'">
+                <div>
+                    <div class="preview-watermark-text">VeloRun</div>
+                    <div class="preview-watermark-by">by RockyRindhy</div>
+                </div>
+            `;
+            container.appendChild(watermark);
+        }
+
+        function addActivityInfoBox(activityData) {
+            const mapElement = document.getElementById('map');
+            const oldInfoBox = document.getElementById('activityInfoBox');
+            if (oldInfoBox) oldInfoBox.remove();
+            
+            const date = new Date();
+            const dateStr = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            const weight = getUserWeight();
+            const calories = calculateCalories(activityData.equipment, activityData.time, weight);
+            
+            const infoBox = document.createElement('div');
+            infoBox.id = 'activityInfoBox';
+            infoBox.className = 'activity-info-box';
+            infoBox.innerHTML = `
+                <div class="activity-info-row"><span class="activity-info-label">Aktivitas</span><span class="activity-info-value">${activityData.name}</span></div>
+                <div class="activity-info-row"><span class="activity-info-label">Tipe</span><span class="activity-info-value">${activityData.equipment}</span></div>
+                <div class="activity-info-row"><span class="activity-info-label">Jarak</span><span class="activity-info-value">${normalizeDistance(activityData.dist)} km</span></div>
+                <div class="activity-info-row"><span class="activity-info-label">Waktu</span><span class="activity-info-value">${normalizeTime(activityData.time)}</span></div>
+                <div class="activity-info-row"><span class="activity-info-label">Pace</span><span class="activity-info-value">${normalizePace(activityData.pace)}/km</span></div>
+                <div class="activity-info-row"><span class="activity-info-label">Kalori</span><span class="activity-info-value">🔥 ${calories} kkal</span></div>
+                <div class="activity-info-row"><span class="activity-info-label">Tanggal</span><span class="activity-info-value">${dateStr}</span></div>
+            `;
+            mapElement.appendChild(infoBox);
+        }
+
+        function removeActivityInfoBox() {
+            const infoBox = document.getElementById('activityInfoBox');
+            if (infoBox) infoBox.remove();
+        }
+
+        function updateMarkerColor(isTracking) {
+            if (currentMarker) {
+                const el = currentMarker.getElement();
+                if (el) {
+                    if (isTracking) el.classList.add('tracking');
+                    else el.classList.remove('tracking');
+                }
+            }
+        }
+
+        function createStartIcon() { 
+            return L.divIcon({ 
+                className: 'start-point-marker',
+                html: `<div style="width: 18px; height: 18px; background: #22C55E; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
+                iconSize: [18, 18], 
+                iconAnchor: [9, 9] 
+            }); 
+        }
+
+        function createFinishIcon() { 
+            return L.divIcon({ 
+                className: 'finish-point-marker',
+                html: `<div style="width: 18px; height: 18px; background: #EF4444; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
+                iconSize: [18, 18], 
+                iconAnchor: [9, 9] 
+            }); 
+        }
+
+        function createCurrentPositionIcon() { return L.divIcon({ className: 'current-position-marker', iconSize: [20, 20], iconAnchor: [10, 10] }); }
+        function updateCurrentMarker(lat, lng) { if (!currentMarker) currentMarker = L.marker([lat, lng], { icon: createCurrentPositionIcon(), zIndexOffset: 1000 }).addTo(map); else currentMarker.setLatLng([lat, lng]); }
+        function addStartMarker(lat, lng) { if (startMarker) map.removeLayer(startMarker); startMarker = L.marker([lat, lng], { icon: createStartIcon(), title: 'Titik Mulai', zIndexOffset: 800 }).addTo(map); }
+        function addFinishMarker(lat, lng) { if (finishMarker) map.removeLayer(finishMarker); finishMarker = L.marker([lat, lng], { icon: createFinishIcon(), title: 'Titik Selesai', zIndexOffset: 800 }).addTo(map); }
+        function forceCenterMap() { if (lastPosition) { map.setView([lastPosition.lat, lastPosition.lng], DEFAULT_ZOOM, { animate: true, duration: 0.8 }); userInteracted = false; } }
+
+        map.on('dragstart zoomstart movestart', () => { clearTimeout(autoCenterTimer); userInteracted = true; });
+        map.on('dragend zoomend moveend', () => { if (userInteracted && lastPosition) { clearTimeout(autoCenterTimer); autoCenterTimer = setTimeout(() => { if (userInteracted) forceCenterMap(); }, AUTO_CENTER_DELAY); } });
+
+        function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) { 
+            const R = 6371e3, φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180; 
+            const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180; 
+            const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2; 
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        }
+
+        function checkAutoPause(currentPos) {
+            const now = Date.now();
+            if (now - lastPauseCheckTime < 2000) return isPaused;
+            if (!lastTrackedPosition) return false;
+            const dist = getDistanceFromLatLonInM(lastTrackedPosition.lat, lastTrackedPosition.lng, currentPos.lat, currentPos.lng);
+            const timeDiff = (currentPos.timestamp - lastTrackedPosition.timestamp) / 1000;
+            if (timeDiff < 1 || timeDiff > 300) return isPaused;
+            const speedKmh = (dist / timeDiff) * 3.6;
+            lastPauseCheckTime = now;
+            return speedKmh < AUTO_PAUSE_SPEED;
+        }
+
+        function updateTimer() { 
+            if (isPaused) return; 
+            const elapsed = Date.now() - startTime - elapsedPausedTime; 
+            const hrs = Math.floor(elapsed / 3600000), mins = Math.floor((elapsed % 3600000) / 60000), secs = Math.floor((elapsed % 60000) / 1000); 
+            document.getElementById('timeDisplay').innerText = `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`; 
+            updatePace(elapsed); 
+        }
+
+        function updatePace(elapsedMs) { 
+            if (totalDistance < 10) { document.getElementById('paceDisplay').innerText = "0:00"; return; } 
+            const paceMsPerKm = elapsedMs / (totalDistance / 1000); 
+            const paceMins = Math.floor(paceMsPerKm / 60000), paceSecs = Math.floor((paceMsPerKm % 60000) / 1000); 
+            document.getElementById('paceDisplay').innerText = `${paceMins}:${String(paceSecs).padStart(2,'0')}`; 
+        }
+
+        function updateStatus(text, statusClass = '') { 
+            document.getElementById('statusText').innerText = text; 
+            document.getElementById('statusDot').className = 'status-dot ' + statusClass; 
+        }
+
+        function onGeoSuccess(position) {
+            const { latitude: lat, longitude: lng, accuracy } = position.coords;
+            document.getElementById('accuracyInfo').innerText = `Akurasi: ${Math.round(accuracy)}m`;
+            if (accuracy > MIN_ACCURACY) return;
+            const currentPos = { lat, lng, timestamp: Date.now() };
+            updateCurrentMarker(lat, lng);
+            if (!gpsFirstLock) {
+                gpsFirstLock = true;
+                document.getElementById('gpsLoading').classList.add('hidden');
+                map.setView([lat, lng], DEFAULT_ZOOM, { animate: true });
+                updateStatus('GPS Siap - Tekan Mulai', 'ready');
+                document.getElementById('btnStart').disabled = false;
+                lastPosition = currentPos;
+                lastTrackedPosition = currentPos;
+                return;
+            }
+            lastPosition = currentPos;
+            if (isTracking) {
+                const shouldPause = checkAutoPause(currentPos);
+                if (shouldPause && !isPaused) { togglePause(true); } 
+                else if (!shouldPause && isPaused) {
+                    const dist = getDistanceFromLatLonInM(lastTrackedPosition.lat, lastTrackedPosition.lng, currentPos.lat, currentPos.lng);
+                    const timeDiff = (currentPos.timestamp - lastTrackedPosition.timestamp) / 1000;
+                    if ((dist / timeDiff) * 3.6 > 2.0) togglePause(false);
+                }
+                if (!isPaused) {
+                    lastTrackedPosition = currentPos;
+                    if (routeCoords.length > 0) {
+                        const prevPos = routeCoords[routeCoords.length - 1];
+                        const dist = getDistanceFromLatLonInM(prevPos[0], prevPos[1], lat, lng);
+                        if (dist < MAX_JUMP) {
+                            totalDistance += dist; 
+                            routeCoords.push([lat, lng]);
+                            if (!polyline) polyline = L.polyline(routeCoords, { color: '#FF6B00', weight: 6, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+                            else polyline.addLatLng([lat, lng]);
+                        }
+                    } else {
+                        routeCoords.push([lat, lng]);
+                        polyline = L.polyline(routeCoords, { color: '#FF6B00', weight: 6, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+                    }
+                    document.getElementById('distDisplay').innerText = (totalDistance / 1000).toFixed(2);
+                    if (!userInteracted) map.panTo([lat, lng], { animate: true, duration: 0.5 });
+                }
+            }
+        }
+
+        function onGeoError(error) {
+            let msg = "Gagal mengakses GPS.";
+            if (error.code === 1) msg = "Izin lokasi ditolak.";
+            else if (error.code === 2) msg = "GPS tidak tersedia.";
+            else if (error.code === 3) msg = "Timeout GPS.";
+            document.getElementById('gpsLoading').querySelector('.gps-loading-text').innerText = 'Gagal';
+            document.getElementById('gpsLoading').querySelector('.gps-loading-sub').innerText = msg;
+        }
+
+        function startTracking() {
+            isTracking = true; isPaused = false; userInteracted = false;
+            startTime = Date.now(); elapsedPausedTime = 0; pauseStartTime = 0;
+            totalDistance = 0; routeCoords = [];
+            currentMapImage = null; savedActivityData = null;
+            if (polyline) { map.removeLayer(polyline); polyline = null; }
+            if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
+            if (finishMarker) { map.removeLayer(finishMarker); finishMarker = null; }
+            if (lastPosition) lastTrackedPosition = lastPosition;
+            lastPauseCheckTime = 0;
+            timerInterval = setInterval(updateTimer, 1000);
+            updateStatus('Berlari...', 'tracking');
+            updateMarkerColor(true);
+            document.getElementById('btnStart').style.display = 'none';
+            document.getElementById('btnPause').style.display = 'flex';
+            document.getElementById('btnResume').style.display = 'none';
+            document.getElementById('btnFinish').style.display = 'flex';
+            if (lastPosition) { addStartMarker(lastPosition.lat, lastPosition.lng); forceCenterMap(); }
+        }
+        
+        function togglePause(autoTriggered = false) {
+            if (isPaused) {
+                isPaused = false;
+                elapsedPausedTime += (Date.now() - pauseStartTime);
+                pauseStartTime = 0;
+                if (lastPosition) lastTrackedPosition = lastPosition;
+                lastPauseCheckTime = 0;
+                updateStatus('Berlari...', 'tracking');
+                document.getElementById('btnPause').style.display = 'flex';
+                document.getElementById('btnResume').style.display = 'none';
+            } else {
+                isPaused = true;
+                pauseStartTime = Date.now();
+                updateStatus(autoTriggered ? 'Jeda Otomatis (berhenti)' : 'Dijeda', 'paused');
+                document.getElementById('btnPause').style.display = 'none';
+                document.getElementById('btnResume').style.display = 'flex';
+            }
+        }
+        
+        function finishActivity() {
+            isTracking = false; isPaused = false;
+            clearInterval(timerInterval);
+            updateStatus('Selesai - Simpan aktivitas', 'ready');
+            updateMarkerColor(false);
+            if (lastPosition) addFinishMarker(lastPosition.lat, lastPosition.lng);
+            document.getElementById('btnPause').style.display = 'none';
+            document.getElementById('btnResume').style.display = 'none';
+            document.getElementById('btnFinish').style.display = 'none';
+            document.getElementById('summaryTime').innerText = normalizeTime(document.getElementById('timeDisplay').innerText);
+            document.getElementById('summaryDist').innerText = normalizeDistance(document.getElementById('distDisplay').innerText) + ' km';
+            document.getElementById('summaryPace').innerText = normalizePace(document.getElementById('paceDisplay').innerText);
+            document.getElementById('saveModal').style.display = 'flex';
+        }
+        
+        function backToTracking() {
+            document.getElementById('saveModal').style.display = 'none';
+            isTracking = true; isPaused = true;
+            pauseStartTime = Date.now();
+            updateMarkerColor(true);
+            updateStatus('Dijeda', 'paused');
+            document.getElementById('btnResume').style.display = 'flex';
+            document.getElementById('btnFinish').style.display = 'flex';
+        }
+
+        async function saveActivity() {
+            const name = document.getElementById('actName').value || 'Aktivitas VeloRun';
+            const equipment = document.getElementById('actEquipment').value;
+            const userId = getUserId();
+            const activityData = { 
+                name, equipment, 
+                time: normalizeTime(document.getElementById('timeDisplay').innerText), 
+                dist: normalizeDistance(document.getElementById('distDisplay').innerText), 
+                pace: normalizePace(document.getElementById('paceDisplay').innerText), 
+                route: routeCoords 
+            };
+            document.getElementById('saveModal').style.display = 'none';
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('loadingText').innerText = 'Menyiapkan peta...';
+            try {
+                const savedView = { center: map.getCenter(), zoom: map.getZoom() };
+                if (routeCoords.length > 0) {
+                    const bounds = L.latLngBounds(routeCoords);
+                    map.fitBounds(bounds, { padding: [80, 40], maxZoom: 16, animate: true, duration: 0.8 });
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    await waitForTilesToLoad();
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                document.getElementById('loadingText').innerText = 'Membuat gambar...';
+                addActivityInfoBox(activityData);
+                await new Promise(resolve => setTimeout(resolve, 300));
+                const mapElement = document.getElementById('map');
+                const canvas = await html2canvas(mapElement, { useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scale: 1.5, logging: false });
+                removeActivityInfoBox();
+                currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+                map.setView(savedView.center, savedView.zoom, { animate: false });
+                let imageData = null;
+                if (currentMapImage) {
+                    document.getElementById('loadingText').innerText = 'Mengupload...';
+                    imageData = await blobToBase64(currentMapImage);
+                }
+                document.getElementById('loadingText').innerText = 'Menyimpan...';
+                const payload = { 
+                    userId, name: activityData.name, equipment: activityData.equipment, 
+                    distance: parseFloat(activityData.dist), duration: activityData.time, 
+                    pace: activityData.pace, route: activityData.route, imageData 
+                };
+                const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const responseText = await response.text();
+                const result = JSON.parse(responseText);
+                if (result.success) {
+                    savedActivityData = { ...activityData, imageUrl: result.imageUrl };
+                    showResultModal(activityData);
+                } else { throw new Error(result.error || 'Gagal menyimpan'); }
+            } catch (error) {
+                console.error('Error:', error);
+                removeActivityInfoBox();
+                savedActivityData = activityData;
+                showResultModal(activityData, true);
+            } finally { 
+                document.getElementById('loading').style.display = 'none'; 
+            }
+        }
+
+        function waitForTilesToLoad() {
+            return new Promise((resolve) => {
+                const checkTiles = () => {
+                    const loadingTiles = document.querySelectorAll('.leaflet-tile-container .leaflet-tile-loading');
+                    if (loadingTiles.length === 0) resolve();
+                    else setTimeout(checkTiles, 200);
+                };
+                setTimeout(() => resolve(), 3000);
+                checkTiles();
+            });
+        }
+
+        function showResultModal(activityData, hasError = false) {
+            document.getElementById('resultName').innerText = activityData.name;
+            document.getElementById('resultDist').innerText = activityData.dist + ' km';
+            document.getElementById('resultTime').innerText = activityData.time;
+            const imgEl = document.getElementById('resultImage');
+            if (currentMapImage) {
+                const imageUrl = URL.createObjectURL(currentMapImage);
+                imgEl.src = imageUrl;
+                imgEl.style.display = 'block';
+                if (imgEl.dataset.oldUrl) URL.revokeObjectURL(imgEl.dataset.oldUrl);
+                imgEl.dataset.oldUrl = imageUrl;
+                setTimeout(() => addPreviewWatermark('resultPreviewContainer'), 100);
+            } else { imgEl.style.display = 'none'; }
+            if (hasError) document.querySelector('#resultModal h3').innerText = 'Tersimpan (Gambar Gagal)';
+            else document.querySelector('#resultModal h3').innerText = 'Aktivitas Tersimpan!';
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+
+        async function shareActivity() {
+            if (!savedActivityData) return;
+            const weight = getUserWeight();
+            const calories = calculateCalories(savedActivityData.equipment, savedActivityData.time, weight);
+            const shareData = { title: savedActivityData.name, text: `${savedActivityData.name}\n📏 ${savedActivityData.dist} km\n⏱ ${savedActivityData.time}\n⚡ Pace: ${savedActivityData.pace}\n🔥 Kalori: ${calories} kkal\n\n#VeloRun` };
+            if (currentMapImage && navigator.canShare) {
+                const file = new File([currentMapImage], 'velorun.jpg', { type: 'image/jpeg' });
+                if (navigator.canShare({ files: [file] })) shareData.files = [file];
+            }
+            try {
+                if (navigator.share) await navigator.share(shareData);
+                else { await navigator.clipboard.writeText(shareData.text); alert('Teks disalin!'); }
+            } catch (err) { console.log('Share dibatalkan'); }
+        }
+
+        function downloadImage() {
+            if (!currentMapImage) { alert('Tidak ada gambar'); return; }
+            const url = URL.createObjectURL(currentMapImage);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `velorun_${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            setTimeout(() => alert('Gambar utuh disimpan ke Downloads!'), 300);
+        }
+
+        function startNewActivity() {
+            document.getElementById('resultModal').style.display = 'none';
+            routeCoords = [];
+            if (polyline) { map.removeLayer(polyline); polyline = null; }
+            if (startMarker) { map.removeLayer(startMarker); startMarker = null; }
+            if (finishMarker) { map.removeLayer(finishMarker); finishMarker = null; }
+            currentMapImage = null; savedActivityData = null;
+            updateMarkerColor(false);
+            document.getElementById('timeDisplay').innerText = "00:00:00";
+            document.getElementById('distDisplay').innerText = "0.00";
+            document.getElementById('paceDisplay').innerText = "0:00";
+            document.getElementById('btnStart').style.display = 'flex';
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('btnPause').style.display = 'none';
+            document.getElementById('btnResume').style.display = 'none';
+            document.getElementById('btnFinish').style.display = 'none';
+            updateStatus('GPS Siap - Tekan Mulai', 'ready');
+            forceCenterMap();
+        }
+
+        function closeHistory() { document.getElementById('historyModal').style.display = 'none'; }
+        function closeDetail() { 
+            document.getElementById('detailModal').style.display = 'none';
+            currentDetailActivity = null;
+            const openBtn = document.getElementById('openImageBtn');
+            if (openBtn) openBtn.remove();
+            const imgEl = document.getElementById('detailImage');
+            imgEl.src = '';
+            imgEl.style.display = 'none';
+        }
+
+        function openEditModal() {
+            if (!currentDetailActivity) return;
+            document.getElementById('editName').value = currentDetailActivity.name || '';
+            document.getElementById('editEquipment').value = currentDetailActivity.equipment || 'Berlari';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function saveEdit() {
+            const newName = document.getElementById('editName').value.trim();
+            const newEquipment = document.getElementById('editEquipment').value;
+            
+            if (!newName) {
+                alert('Nama aktivitas tidak boleh kosong!');
+                return;
+            }
+            
+            if (!currentDetailActivity || !currentDetailActivity.timestamp) {
+                alert('Data aktivitas tidak valid!');
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('loadingText').innerText = 'Menyimpan perubahan...';
+            closeEditModal();
+            
+            try {
+                const payload = {
+                    action: 'updateActivity',
+                    userId: getUserId(),
+                    timestamp: currentDetailActivity.timestamp,
+                    name: newName,
+                    equipment: newEquipment
+                };
+                
+                const response = await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload) 
+                });
+                const responseText = await response.text();
+                const result = JSON.parse(responseText);
+                
+                if (result.success) {
+                    alert('✅ Aktivitas berhasil diperbarui!');
+                    closeDetail();
+                    showHistory();
+                } else {
+                    throw new Error(result.error || 'Gagal memperbarui');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('⚠️ Gagal memperbarui aktivitas: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function openDeleteModal() {
+            if (!currentDetailActivity) return;
+            document.getElementById('deleteActivityName').innerText = currentDetailActivity.name || 'Aktivitas ini';
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        async function confirmDelete() {
+            if (!currentDetailActivity || !currentDetailActivity.timestamp) {
+                alert('Data aktivitas tidak valid!');
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('loadingText').innerText = 'Menghapus aktivitas...';
+            closeDeleteModal();
+            
+            try {
+                const payload = {
+                    action: 'deleteActivity',
+                    userId: getUserId(),
+                    timestamp: currentDetailActivity.timestamp
+                };
+                
+                const response = await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify(payload) 
+                });
+                const responseText = await response.text();
+                const result = JSON.parse(responseText);
+                
+                if (result.success) {
+                    alert('✅ Aktivitas berhasil dihapus!');
+                    closeDetail();
+                    showHistory();
+                } else {
+                    throw new Error(result.error || 'Gagal menghapus');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('⚠️ Gagal menghapus aktivitas: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function convertGoogleDriveUrl(url) {
+            if (!url || url.trim() === '') return null;
+            let fileId = null;
+            if (url.includes('drive.google.com/uc')) {
+                const match = url.match(/id=([a-zA-Z0-9_-]+)/);
+                if (match) fileId = match[1];
+            } else if (url.includes('drive.google.com/file/d/')) {
+                const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (match) fileId = match[1];
+            } else if (url.includes('lh3.googleusercontent.com/d/')) {
+                return url;
+            } else if (url.includes('drive.google.com/thumbnail')) {
+                const match = url.match(/id=([a-zA-Z0-9_-]+)/);
+                if (match) fileId = match[1];
+            }
+            if (fileId) return `https://lh3.googleusercontent.com/d/${fileId}`;
+            return url;
+        }
+
+        function showImagePlaceholder(message) {
+            const imgEl = document.getElementById('detailImage');
+            const svgPlaceholder = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="220" viewBox="0 0 400 220"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23f1f5f9;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23e2e8f0;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill="url(%23grad)" width="400" height="220" rx="20"/%3E%3Ctext fill="%2394a3b8" font-family="sans-serif" font-size="48" x="50%25" y="45%25" text-anchor="middle" dominant-baseline="middle"%3E%3C/text%3E%3Ctext fill="%2364748b" font-family="sans-serif" font-size="14" font-weight="600" x="50%25" y="60%25" text-anchor="middle"%3E${encodeURIComponent(message)}%3C/text%3E%3C/svg%3E`;
+            imgEl.src = svgPlaceholder;
+            imgEl.style.display = 'block';
+            const openBtn = document.getElementById('openImageBtn');
+            if (openBtn) openBtn.remove();
+        }
+
+        function showImageOpenButton(originalUrl, fileId) {
+            const imgEl = document.getElementById('detailImage');
+            let openUrl = originalUrl;
+            if (fileId) openUrl = `https://drive.google.com/file/d/${fileId}/view`;
+            const svgHtml = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="220" viewBox="0 0 400 220"%3E%3Cdefs%3E%3ClinearGradient id="grad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23fff7ed;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23ffedd5;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill="url(%23grad)" width="400" height="220" rx="20"/%3E%3Ctext fill="%23ea580c" font-family="sans-serif" font-size="48" x="50%25" y="35%25" text-anchor="middle" dominant-baseline="middle"%3E%3C/text%3E%3Ctext fill="%23c2410c" font-family="sans-serif" font-size="14" font-weight="600" x="50%25" y="55%25" text-anchor="middle"%3EGambar tersedia di Google Drive%3C/text%3E%3Ctext fill="%239a3412" font-family="sans-serif" font-size="12" x="50%25" y="65%25" text-anchor="middle"%3EKlik tombol di bawah untuk melihat%3C/text%3E%3C/svg%3E`;
+            imgEl.src = svgHtml;
+            imgEl.style.display = 'block';
+            let openBtn = document.getElementById('openImageBtn');
+            if (!openBtn) {
+                openBtn = document.createElement('button');
+                openBtn.id = 'openImageBtn';
+                openBtn.className = 'btn btn-primary';
+                openBtn.style.marginTop = '12px';
+                openBtn.style.width = '100%';
+                openBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;"><path fill-rule="evenodd" d="M15.75 2.25H21a.75.75 0 0 1 .75.75v5.25a.75.75 0 0 1-1.5 0V4.81L8.03 17.03a.75.75 0 0 1-1.06-1.06L19.19 3.75h-3.44a.75.75 0 0 1 0-1.5Zm-10.5 4.5a1.5 1.5 0 0 0-1.5 1.5v10.5a1.5 1.5 0 0 0 1.5 1.5h10.5a1.5 1.5 0 0 0 1.5-1.5V10.5a.75.75 0 0 1 1.5 0v8.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V8.25a3 3 0 0 1 3-3h8.25a.75.75 0 0 1 0 1.5H5.25Z" clip-rule="evenodd" /></svg> Buka Gambar di Tab Baru`;
+                openBtn.onclick = function() { window.open(openUrl, '_blank'); };
+                const detailInfo = document.querySelector('.detail-info');
+                const closeBtn = detailInfo.parentNode.querySelector('button');
+                detailInfo.parentNode.insertBefore(openBtn, closeBtn);
+            }
+        }
+
+        function showActivityDetail(activity) {
+            console.log('=== DETAIL AKTIVITAS ===');
+            console.log('Activity:', activity);
+            
+            currentDetailActivity = activity;
+            
+            const normalizedDuration = normalizeDuration(activity.duration);
+            const normalizedPace = normalizePaceFromSheet(activity.pace);
+            const normalizedDistance = normalizeDistanceFromSheet(activity.distance);
+            
+            // ✅ Hitung dan tampilkan kalori
+            const weight = getUserWeight();
+            const calories = calculateCalories(activity.equipment, normalizedDuration, weight);
+            
+            document.getElementById('detailName').innerText = activity.name || '-';
+            document.getElementById('detailEquipment').innerText = activity.equipment || '-';
+            document.getElementById('detailDistance').innerText = normalizedDistance + ' km';
+            document.getElementById('detailDuration').innerText = normalizedDuration;
+            document.getElementById('detailPace').innerText = normalizedPace;
+            document.getElementById('detailCalories').innerText = `🔥 ${calories} kkal`;
+            
+            const date = new Date(activity.timestamp);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('detailDate').innerText = date.toLocaleDateString('id-ID', options);
+            
+            const imgEl = document.getElementById('detailImage');
+            const openBtn = document.getElementById('openImageBtn');
+            if (openBtn) openBtn.remove();
+            
+            if (activity.imageUrl && activity.imageUrl.trim() !== '') {
+                const convertedUrl = convertGoogleDriveUrl(activity.imageUrl);
+                let fileId = null;
+                if (activity.imageUrl.includes('id=')) fileId = activity.imageUrl.split('id=')[1].split('&')[0];
+                else if (convertedUrl && convertedUrl.includes('/d/')) fileId = convertedUrl.split('/d/')[1];
+                
+                imgEl.onerror = null;
+                imgEl.onload = null;
+                
+                if (convertedUrl) {
+                    imgEl.src = convertedUrl;
+                    imgEl.style.display = 'block';
+                    setTimeout(() => addPreviewWatermark('detailPreviewContainer'), 300);
+                    
+                    imgEl.onerror = function() {
+                        if (fileId) {
+                            imgEl.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+                            imgEl.onerror = function() { showImageOpenButton(activity.imageUrl, fileId); };
+                        } else {
+                            showImageOpenButton(activity.imageUrl, null);
+                        }
+                    };
+                } else {
+                    showImagePlaceholder('URL tidak valid');
+                }
+            } else {
+                showImagePlaceholder('Tidak ada gambar tersimpan');
+            }
+            document.getElementById('detailModal').style.display = 'flex';
+        }
+
+        async function showHistory() {
+            document.getElementById('historyModal').style.display = 'flex';
+            const list = document.getElementById('activityList');
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-grey);">Memuat data...</div>';
+            try {
+                const userId = getUserId();
+                const response = await fetch(`${GAS_URL}?action=getActivities&userId=${userId}`);
+                const responseText = await response.text();
+                console.log('=== RESPONSE DARI SERVER ===');
+                console.log(responseText);
+                const result = JSON.parse(responseText);
+                
+                if (result.success && result.activities.length > 0) {
+                    window._activities = result.activities;
+                    const weight = getUserWeight();
+                    
+                    list.innerHTML = result.activities.map((act, index) => {
+                        const hasImage = act.imageUrl && act.imageUrl.trim() !== '';
+                        const statusIcon = hasImage ? '✓' : '';
+                        const statusColor = hasImage ? '#10b981' : '#ef4444';
+                        const statusText = hasImage ? 'Ada gambar' : 'Tidak ada gambar';
+                        const normalizedDuration = normalizeDuration(act.duration);
+                        const normalizedPace = normalizePaceFromSheet(act.pace);
+                        const normalizedDistance = normalizeDistanceFromSheet(act.distance);
+                        
+                        // ✅ Hitung kalori untuk list
+                        const calories = calculateCalories(act.equipment, normalizedDuration, weight);
+                        
+                        return `<div class="activity-item" onclick="showActivityDetail(window._activities[${index}])">
+                            <div class="activity-info">
+                                <h4>${act.name || 'Tanpa Nama'}</h4>
+                                <p> ${normalizedDistance} km | ${normalizedDuration} | ${normalizedPace}</p>
+                                <p> ${calories} kkal |${act.equipment || '-'} | ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                <p style="font-size:10px; color:${statusColor};">${statusIcon} ${statusText}</p>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else { 
+                    list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-grey);">Belum ada aktivitas.</div>'; 
+                }
+            } catch (error) { 
+                list.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Gagal memuat data.</div>'; 
+            }
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(blob); });
+        }
+
+        function initGPS() {
+            if (navigator.geolocation) watchId = navigator.geolocation.watchPosition(onGeoSuccess, onGeoError, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+            else document.getElementById('gpsLoading').querySelector('.gps-loading-text').innerText = 'GPS Tidak Didukung';
+        }
+        
+        window.addEventListener('load', () => {
+            initGPS();
+            // ✅ Tampilkan modal profil jika berat badan belum diatur
+            if (!localStorage.getItem('velorun_userWeight')) {
+                setTimeout(() => {
+                    openProfileModal();
+                }, 1000);
+            }
+        });
+        
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed:', err));
+    </script>
+</body>
+</html>
