@@ -171,6 +171,7 @@
         #deleteModal .modal-content { z-index: 2301 !important; }
         #profileModal { z-index: 2400 !important; }
         #profileModal .modal-content { z-index: 2401 !important; }
+        #mapLightboxModal { z-index: 2500 !important; background: rgba(0,0,0,0.95) !important; }
         
         .modal-content { padding: 24px; border-radius: 28px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
         @keyframes slideUp { from { transform: translateY(40px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
@@ -238,7 +239,8 @@
             position: relative; z-index: 1; background: #f1f5f9;
         }
         
-        .detail-image { width: 100%; height: 100%; object-fit: cover; object-position: center center; display: block; }
+        .detail-image { width: 100%; height: 100%; object-fit: cover; object-position: center center; display: block; cursor: zoom-in; transition: transform 0.2s; }
+        .detail-image:hover { transform: scale(1.02); }
         
         .detail-label {
             position: absolute; top: 10px; right: 10px;
@@ -282,6 +284,49 @@
             display: flex;
             gap: 10px;
             margin-top: 16px;
+        }
+
+        /* ✅ CSS UNTUK LIGHTBOX PETA */
+        .lightbox-content {
+            position: relative;
+            width: 95vw;
+            height: 95vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .lightbox-image {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .lightbox-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            max-width: 400px;
         }
         
         .leaflet-control-zoom {
@@ -577,7 +622,7 @@
         <div class="modal-content glass-panel glossy-highlight">
             <h3>Detail Aktivitas</h3>
             <div class="detail-image-container" id="detailPreviewContainer">
-                <div class="detail-label">Peta Rute</div>
+                <div class="detail-label">Ketuk untuk memperbesar</div>
                 <img id="detailImage" class="detail-image" src="" alt="Peta rute">
             </div>
             <div class="detail-info">
@@ -604,6 +649,24 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                 Tutup
             </button>
+        </div>
+    </div>
+
+    <!-- ✅ MODAL LIGHTBOX PETA (BARU) -->
+    <div class="modal" id="mapLightboxModal">
+        <div class="lightbox-content">
+            <button class="lightbox-close" onclick="closeMapLightbox()">✕</button>
+            <img id="lightboxImage" class="lightbox-image" src="" alt="Peta Rute Utuh">
+            <div class="lightbox-actions">
+                <button class="btn btn-primary" onclick="downloadLightboxImage()" style="flex: 1;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path fill-rule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" /></svg>
+                    Unduh Gambar
+                </button>
+                <button class="btn btn-dark" onclick="closeMapLightbox()" style="flex: 1;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
+                    Kembali
+                </button>
+            </div
         </div>
     </div>
 
@@ -657,10 +720,10 @@
         </div>
     </div>
 
-    <!-- ✅ MODAL PROFIL PENGGUNA (BARU) -->
+    <!-- Modal Profil Pengguna -->
     <div class="modal" id="profileModal">
         <div class="modal-content glass-panel glossy-highlight">
-            <h3>⚙️ Profil Pengguna</h3>
+            <h3>Profil Pengguna</h3>
             <p style="color: var(--text-grey); font-size: 13px; margin-bottom: 16px; position: relative; z-index: 1;">Data ini digunakan untuk menghitung estimasi kalori yang terbakar secara akurat.</p>
             
             <label style="font-size: 12px; color: var(--text-grey); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; position: relative; z-index: 1;">Nama Tampilan</label>
@@ -698,6 +761,28 @@
         const AUTO_PAUSE_SPEED = 1.5;
         const AUTO_CENTER_DELAY = 5000;
 
+        // ✅ VARIABEL WAKE LOCK UNTUK MENCEGAH LAYAR MATI
+        let wakeLock = null;
+
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Wake Lock aktif');
+                }
+            } catch (err) {
+                console.log('Wake Lock error:', err);
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release();
+                wakeLock = null;
+                console.log('Wake Lock dilepas');
+            }
+        }
+
         // ✅ FUNGSI PROFIL & KALORI
         function openProfileModal() {
             document.getElementById('profileName').value = localStorage.getItem('velorun_profileName') || '';
@@ -725,7 +810,7 @@
         }
 
         function getUserWeight() {
-            return parseFloat(localStorage.getItem('velorun_userWeight')) || 70; // Default 70kg
+            return parseFloat(localStorage.getItem('velorun_userWeight')) || 70;
         }
 
         function calculateCalories(activityType, durationStr, weightKg) {
@@ -1082,8 +1167,12 @@
             if (finishMarker) { map.removeLayer(finishMarker); finishMarker = null; }
             if (lastPosition) lastTrackedPosition = lastPosition;
             lastPauseCheckTime = 0;
+            
+            // ✅ Aktifkan Wake Lock agar layar tidak mati
+            requestWakeLock();
+            
             timerInterval = setInterval(updateTimer, 1000);
-            updateStatus('Berlari...', 'tracking');
+            updateStatus('Berlari... (Jangan kunci layar)', 'tracking');
             updateMarkerColor(true);
             document.getElementById('btnStart').style.display = 'none';
             document.getElementById('btnPause').style.display = 'flex';
@@ -1099,12 +1188,14 @@
                 pauseStartTime = 0;
                 if (lastPosition) lastTrackedPosition = lastPosition;
                 lastPauseCheckTime = 0;
-                updateStatus('Berlari...', 'tracking');
+                requestWakeLock(); // Aktifkan kembali saat resume
+                updateStatus('Berlari... (Jangan kunci layar)', 'tracking');
                 document.getElementById('btnPause').style.display = 'flex';
                 document.getElementById('btnResume').style.display = 'none';
             } else {
                 isPaused = true;
                 pauseStartTime = Date.now();
+                releaseWakeLock(); // Lepaskan saat pause untuk hemat baterai
                 updateStatus(autoTriggered ? 'Jeda Otomatis (berhenti)' : 'Dijeda', 'paused');
                 document.getElementById('btnPause').style.display = 'none';
                 document.getElementById('btnResume').style.display = 'flex';
@@ -1114,6 +1205,7 @@
         function finishActivity() {
             isTracking = false; isPaused = false;
             clearInterval(timerInterval);
+            releaseWakeLock(); // ✅ Lepaskan Wake Lock saat selesai
             updateStatus('Selesai - Simpan aktivitas', 'ready');
             updateMarkerColor(false);
             if (lastPosition) addFinishMarker(lastPosition.lat, lastPosition.lng);
@@ -1130,6 +1222,7 @@
             document.getElementById('saveModal').style.display = 'none';
             isTracking = true; isPaused = true;
             pauseStartTime = Date.now();
+            requestWakeLock();
             updateMarkerColor(true);
             updateStatus('Dijeda', 'paused');
             document.getElementById('btnResume').style.display = 'flex';
@@ -1152,27 +1245,47 @@
             document.getElementById('loadingText').innerText = 'Menyiapkan peta...';
             try {
                 const savedView = { center: map.getCenter(), zoom: map.getZoom() };
+                
+                // ✅ PERBAIKAN CROPPING: Invalidate size dan fitBounds yang lebih robust
+                map.invalidateSize();
                 if (routeCoords.length > 0) {
                     const bounds = L.latLngBounds(routeCoords);
-                    map.fitBounds(bounds, { padding: [80, 40], maxZoom: 16, animate: true, duration: 0.8 });
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    map.fitBounds(bounds, { padding: [100, 100], maxZoom: 15, animate: true, duration: 1.0 });
+                    await new Promise(resolve => setTimeout(resolve, 2500)); // Tunggu lebih lama agar tile load sempurna
                     await waitForTilesToLoad();
                 } else {
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
+                
                 document.getElementById('loadingText').innerText = 'Membuat gambar...';
                 addActivityInfoBox(activityData);
                 await new Promise(resolve => setTimeout(resolve, 300));
+                
                 const mapElement = document.getElementById('map');
-                const canvas = await html2canvas(mapElement, { useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scale: 1.5, logging: false });
+                
+                // ✅ PERBAIKAN CROPPING: Tentukan width/height eksplisit
+                const canvas = await html2canvas(mapElement, { 
+                    useCORS: true, 
+                    allowTaint: true, 
+                    backgroundColor: '#ffffff', 
+                    scale: 2,
+                    width: mapElement.offsetWidth,
+                    height: mapElement.offsetHeight,
+                    windowWidth: mapElement.offsetWidth,
+                    windowHeight: mapElement.offsetHeight,
+                    logging: false 
+                });
+                
                 removeActivityInfoBox();
                 currentMapImage = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
                 map.setView(savedView.center, savedView.zoom, { animate: false });
+                
                 let imageData = null;
                 if (currentMapImage) {
                     document.getElementById('loadingText').innerText = 'Mengupload...';
                     imageData = await blobToBase64(currentMapImage);
                 }
+                
                 document.getElementById('loadingText').innerText = 'Menyimpan...';
                 const payload = { 
                     userId, name: activityData.name, equipment: activityData.equipment, 
@@ -1182,6 +1295,7 @@
                 const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const responseText = await response.text();
                 const result = JSON.parse(responseText);
+                
                 if (result.success) {
                     savedActivityData = { ...activityData, imageUrl: result.imageUrl };
                     showResultModal(activityData);
@@ -1275,6 +1389,7 @@
         }
 
         function closeHistory() { document.getElementById('historyModal').style.display = 'none'; }
+        
         function closeDetail() { 
             document.getElementById('detailModal').style.display = 'none';
             currentDetailActivity = null;
@@ -1283,6 +1398,30 @@
             const imgEl = document.getElementById('detailImage');
             imgEl.src = '';
             imgEl.style.display = 'none';
+        }
+
+        // ✅ FUNGSI LIGHTBOX PETA
+        function openMapLightbox() {
+            const src = document.getElementById('detailImage').src;
+            // Jangan buka jika masih placeholder SVG
+            if (src && !src.includes('svg') && currentDetailActivity) {
+                document.getElementById('lightboxImage').src = src;
+                document.getElementById('mapLightboxModal').style.display = 'flex';
+            }
+        }
+
+        function closeMapLightbox() {
+            document.getElementById('mapLightboxModal').style.display = 'none';
+        }
+
+        function downloadLightboxImage() {
+            const img = document.getElementById('lightboxImage');
+            const link = document.createElement('a');
+            link.href = img.src;
+            link.download = `velorun_rute_${Date.now()}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function openEditModal() {
@@ -1323,10 +1462,7 @@
                     equipment: newEquipment
                 };
                 
-                const response = await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify(payload) 
-                });
+                const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const responseText = await response.text();
                 const result = JSON.parse(responseText);
                 
@@ -1372,10 +1508,7 @@
                     timestamp: currentDetailActivity.timestamp
                 };
                 
-                const response = await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify(payload) 
-                });
+                const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const responseText = await response.text();
                 const result = JSON.parse(responseText);
                 
@@ -1454,7 +1587,6 @@
             const normalizedPace = normalizePaceFromSheet(activity.pace);
             const normalizedDistance = normalizeDistanceFromSheet(activity.distance);
             
-            // ✅ Hitung dan tampilkan kalori
             const weight = getUserWeight();
             const calories = calculateCalories(activity.equipment, normalizedDuration, weight);
             
@@ -1472,6 +1604,9 @@
             const imgEl = document.getElementById('detailImage');
             const openBtn = document.getElementById('openImageBtn');
             if (openBtn) openBtn.remove();
+            
+            // ✅ Tambahkan event listener untuk membuka lightbox
+            imgEl.onclick = openMapLightbox;
             
             if (activity.imageUrl && activity.imageUrl.trim() !== '') {
                 const convertedUrl = convertGoogleDriveUrl(activity.imageUrl);
@@ -1528,15 +1663,13 @@
                         const normalizedDuration = normalizeDuration(act.duration);
                         const normalizedPace = normalizePaceFromSheet(act.pace);
                         const normalizedDistance = normalizeDistanceFromSheet(act.distance);
-                        
-                        // ✅ Hitung kalori untuk list
                         const calories = calculateCalories(act.equipment, normalizedDuration, weight);
                         
                         return `<div class="activity-item" onclick="showActivityDetail(window._activities[${index}])">
                             <div class="activity-info">
                                 <h4>${act.name || 'Tanpa Nama'}</h4>
-                                <p> ${normalizedDistance} km | ${normalizedDuration} | ${normalizedPace}</p>
-                                <p> ${calories} kkal |${act.equipment || '-'} | ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
+                                <p> ${normalizedDistance} km |  ${normalizedDuration} |  ${normalizedPace}</p>
+                                <p> ${calories} kkal |  ${act.equipment || '-'} |  ${new Date(act.timestamp).toLocaleDateString('id-ID')}</p>
                                 <p style="font-size:10px; color:${statusColor};">${statusIcon} ${statusText}</p>
                             </div>
                         </div>`;
@@ -1560,7 +1693,6 @@
         
         window.addEventListener('load', () => {
             initGPS();
-            // ✅ Tampilkan modal profil jika berat badan belum diatur
             if (!localStorage.getItem('velorun_userWeight')) {
                 setTimeout(() => {
                     openProfileModal();
